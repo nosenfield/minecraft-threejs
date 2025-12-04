@@ -260,7 +260,6 @@ export default class UI {
   loadModal = document.querySelector('.load-modal')
   settings = document.querySelector('.settings')
   controlsModal = document.querySelector('.controls')
-  github = document.querySelector('.github')
   
   // M4.2: Block counter element (created dynamically after FPS)
   blockCounter: HTMLDivElement
@@ -287,7 +286,6 @@ export default class UI {
     this.menu?.classList.remove('start')
     this.play && (this.play.innerHTML = 'Resume')
     this.crossHair.classList.remove('hidden')
-    this.github && this.github.classList.add('hidden')
     // Controls button now visible in escape menu (not hidden during gameplay)
     // Show escape-menu-only buttons (Settings, Export) when entering game
     this.setting?.classList.remove('hidden')
@@ -301,7 +299,6 @@ export default class UI {
     this.crossHair.classList.add('hidden')
     // Hide Load Game button in escape menu (only visible in start menu)
     this.save?.classList.add('hidden')
-    this.github && this.github.classList.remove('hidden')
     // Controls button visible in escape menu
     this.controls?.classList.remove('hidden')
     // Show escape-menu-only buttons (Settings, Export) in escape menu
