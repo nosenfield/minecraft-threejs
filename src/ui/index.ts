@@ -6,7 +6,7 @@ import Control from '../control'
 import { Mode } from '../player'
 // M4.4: Joystick import removed - mobile controls not needed for MVP
 // import Joystick from './joystick'
-import { isMobile } from '../utils'
+import { isMobile, blockTypeToHex } from '../utils'
 import * as THREE from 'three'
 
 export default class UI {
@@ -67,6 +67,18 @@ export default class UI {
         // Initialize blocks (creates InstancedMesh instances)
         // Note: This will create a new ground plane, but we'll replace customBlocks with loaded data
         terrain.initBlocks()
+        
+        // M5.1: Backward compatibility - ensure all loaded blocks have color property
+        // If color is missing (old saves), derive it from BlockType
+        for (const block of customBlocks) {
+          if (!block.color && block.type !== undefined) {
+            block.color = blockTypeToHex(block.type)
+          }
+          // Ensure isGround is boolean (old saves might have undefined)
+          if (block.isGround === undefined) {
+            block.isGround = false
+          }
+        }
         
         // Load custom blocks (this includes the ground plane if it was saved)
         terrain.customBlocks = customBlocks

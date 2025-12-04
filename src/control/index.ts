@@ -6,7 +6,7 @@ import Terrain, { BlockType } from '../terrain'
 import Block from '../terrain/mesh/block'
 import Noise from '../terrain/noise'
 import Audio from '../audio'
-import { isMobile } from '../utils'
+import { isMobile, blockTypeToHex } from '../utils'
 import { 
   BLOCK_INTERACTION_RANGE,
   BLOCK_X_MIN,
@@ -314,7 +314,8 @@ export default class Control {
               placeY,
               placeZ,
               this.holdingBlock,
-              true
+              true,
+              blockTypeToHex(this.holdingBlock)
             )
             this.terrain.customBlocks.push(newBlock)
             // Performance: Update blocksMap for O(1) lookups
@@ -412,12 +413,14 @@ export default class Control {
 
             // add to custom blocks when it's not existed
             if (!existed) {
+              const blockType = BlockType[block.object.name as any] as unknown as BlockType
               const removedBlock = new Block(
                 position.x,
                 position.y,
                 position.z,
-                BlockType[block.object.name as any] as unknown as BlockType,
-                false
+                blockType,
+                false,
+                blockTypeToHex(blockType)
               )
               this.terrain.customBlocks.push(removedBlock)
               // Performance: Update blocksMap for O(1) lookups

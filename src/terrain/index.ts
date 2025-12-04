@@ -3,6 +3,7 @@ import Materials, { MaterialType } from './mesh/materials'
 import Block from './mesh/block'
 import Highlight from './highlight'
 import Noise from './noise'
+import { blockTypeToHex } from '../utils'
 
 import Generate from './worker/generate?worker'
 
@@ -198,7 +199,7 @@ export default class Terrain {
         const blockColor = isMarker ? markerColor : groundColor
         
         // Create block with isGround flag
-        const block = new Block(x, 0, z, blockColor, true, true)
+        const block = new Block(x, 0, z, blockColor, true, blockTypeToHex(blockColor), true)
         this.customBlocks.push(block)
         this.blocksMap.set(blockKey, block) // Add to Map for O(1) lookup
         
@@ -302,7 +303,7 @@ export default class Terrain {
     }
 
     // build block
-    const block = new Block(position.x, position.y, position.z, type, true)
+    const block = new Block(position.x, position.y, position.z, type, true, blockTypeToHex(type))
     this.customBlocks.push(block)
     // Performance: Update blocksMap for O(1) lookups
     this.blocksMap.set(`${position.x}_${position.y}_${position.z}`, block)
