@@ -8,6 +8,7 @@ import { Mode } from '../player'
 // import Joystick from './joystick'
 import { isMobile, blockTypeToHex } from '../utils'
 import * as THREE from 'three'
+import { serializeToSpaceJSON } from '../export'
 
 export default class UI {
   constructor(terrain: Terrain, control: Control) {
@@ -134,10 +135,14 @@ export default class UI {
     // Initialize Load Game button state on startup
     this.updateLoadGameButtonState()
 
-    // M4.5: Export button handler (placeholder - actual export in Phase 4)
-    this.export?.addEventListener('click', () => {
-      console.log('Export button clicked - export functionality will be implemented in Phase 4')
-      // TODO: Implement export functionality in Phase 4 (M5.2 + Phase 4 tasks)
+    // Phase 4: Export button handler
+    this.export?.addEventListener('click', async () => {
+      await this.handleExport()
+    })
+
+    // Phase 4: Error message close button
+    this.errorClose?.addEventListener('click', () => {
+      this.hideErrorMessage()
     })
 
     // controls
@@ -272,6 +277,12 @@ export default class UI {
   loadModal = document.querySelector('.load-modal')
   settings = document.querySelector('.settings')
   controlsModal = document.querySelector('.controls')
+  
+  // Phase 4: Export UI components
+  loadingOverlay = document.querySelector('.loading-overlay')
+  errorMessage = document.querySelector('.error-message')
+  errorText = document.querySelector('.error-text')
+  errorClose = document.querySelector('#error-close')
   
   // M4.2: Block counter element (created dynamically after FPS)
   blockCounter: HTMLDivElement
@@ -452,5 +463,92 @@ export default class UI {
     this.fps.update()
     // M4.2: Update block counter every frame
     this.updateBlockCounter()
+  }
+
+  // Phase 4: Loading overlay methods
+  showLoadingOverlay = () => {
+    this.loadingOverlay?.classList.remove('hidden')
+  }
+
+  hideLoadingOverlay = () => {
+    this.loadingOverlay?.classList.add('hidden')
+  }
+
+  // Phase 4: Error message methods
+  showErrorMessage = (message: string) => {
+    if (this.errorText) {
+      this.errorText.textContent = message
+    }
+    this.errorMessage?.classList.remove('hidden')
+  }
+
+  hideErrorMessage = () => {
+    this.errorMessage?.classList.add('hidden')
+    if (this.errorText) {
+      this.errorText.textContent = ''
+    }
+  }
+
+  // Phase 4: Export handler
+  handleExport = async () => {
+    try {
+      // Show loading overlay
+      this.showLoadingOverlay()
+
+      // Serialize blocks to Space JSON
+      const spaceJSON = serializeToSpaceJSON(
+        this.terrain.customBlocks,
+        1, // schemaVersion 1 for MVP
+        'Untitled Level'
+      )
+
+      // POST to backend
+      const apiUrl = import.meta.env.VITE_API_URL || '/api/export'
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: spaceJSON,
+      })
+
+      // Check for errors
+      if (!response.ok) {
+        // Try to parse error message from response
+        let errorMessage = `Export failed: ${response.statusText}`
+        try {
+          const errorData = await response.json()
+          if (errorData.error || errorData.message) {
+            errorMessage = errorData.error || errorData.message
+          }
+        } catch {
+          // If JSON parsing fails, use status text
+        }
+        throw new Error(errorMessage)
+      }
+
+      // Handle successful response - trigger download
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'level.rbxlx'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+
+      // Hide loading overlay on success
+      this.hideLoadingOverlay()
+    } catch (error) {
+      // Hide loading overlay on error
+      this.hideLoadingOverlay()
+
+      // Show error message
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Export failed: Unknown error occurred'
+      this.showErrorMessage(errorMessage)
+    }
   }
 }

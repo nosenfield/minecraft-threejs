@@ -300,6 +300,72 @@ body {
   opacity: 100%;
 }
 
+/* Phase 4: Loading overlay for export */
+.loading-overlay {
+  z-index: 3;
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  
+  padding: 20px 40px;
+  width: auto;
+  min-width: 200px;
+  
+  color: white;
+  background-color: #727272;
+  border-left: 2px solid #a4a4a4;
+  border-top: 2px solid #a4a4a4;
+  border-bottom: 2px solid #545655;
+  border-right: 2px solid #545655;
+  box-shadow: 0 0 0 2px black;
+  
+  text-align: center;
+  user-select: none;
+}
+
+.loading-content {
+  font-family: Minecraft, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 1.2rem;
+}
+
+/* Phase 4: Error message component */
+.error-message {
+  z-index: 4;
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  
+  padding: 20px;
+  width: 400px;
+  max-width: 90vw;
+  
+  color: white;
+  background-color: #8b0000;
+  border-left: 2px solid #ff4444;
+  border-top: 2px solid #ff4444;
+  border-bottom: 2px solid #5a0000;
+  border-right: 2px solid #5a0000;
+  box-shadow: 0 0 0 2px white;
+  
+  text-align: center;
+  user-select: none;
+}
+
+.error-content {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.error-text {
+  font-family: Minecraft, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 1.1rem;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+
 .github svg {
   z-index: 3;
   fill: #727272;
