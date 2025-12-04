@@ -183,10 +183,6 @@ export default class Control {
           this.velocity.y = this.velocity.y > 0 ? this.player.speed : -this.player.speed
         }
         break
-      case 'Shift':
-        // Shift: Move down (same as Q for consistency)
-        this.velocity.y = -this.player.speed
-        break
       default:
         break
     }
@@ -231,10 +227,6 @@ export default class Control {
       case ' ':
         // Space: Toggle behavior - do nothing on keyup
         // Speed toggle is handled on keydown only for true toggle behavior
-        break
-      case 'Shift':
-        // Shift: Stop vertical movement
-        this.velocity.y = 0
         break
       default:
         break
