@@ -153,10 +153,8 @@ export default class UI {
 
     // menu and fullscreen
     document.body.addEventListener('keydown', (e: KeyboardEvent) => {
-      // menu
-      if (e.key === 'e' && document.pointerLockElement) {
-        !isMobile && control.control.unlock()
-      }
+      // E key removed - now used for upward movement in controls
+      // Menu can be accessed via Escape key or clicking outside pointer lock
 
       // fullscreen
       if (e.key === 'f') {

@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls'
-import Player, { Mode } from '../player'
+import Player, { Mode, Speed } from '../player'
 import Terrain, { BlockType } from '../terrain'
 
 import Block from '../terrain/mesh/block'
@@ -37,6 +37,9 @@ export default class Control {
 
     this.initRayCaster()
     this.initEventListeners()
+    
+    // Initialize speed to walking speed (base speed for flying mode)
+    this.player.speed = Speed.walking
   }
 
   // core properties
@@ -99,6 +102,7 @@ export default class Control {
   jumpInterval?: ReturnType<typeof setInterval>
   mouseHolding = false
   spaceHolding = false
+  isFastMode = false
 
   initRayCaster = () => {
     this.raycasterUp.ray.direction = new THREE.Vector3(0, 1, 0)
@@ -129,24 +133,24 @@ export default class Control {
 
     switch (e.key) {
       case 'q':
-        if (this.player.mode === Mode.walking) {
-          this.player.setMode(Mode.flying)
-        } else {
-          this.player.setMode(Mode.walking)
-        }
-        this.velocity.y = 0
-        this.velocity.x = 0
-        this.velocity.z = 0
+      case 'Q':
+        // Q: Move down (absolute vertical axis)
+        this.velocity.y = -this.player.speed
+        break
+      case 'e':
+      case 'E':
+        // E: Move up (absolute vertical axis)
+        this.velocity.y = this.player.speed
         break
       case 'w':
       case 'W':
         this.downKeys.w = true
-        this.velocity.x = this.player.speed
+        this.velocity.x = this.player.speed // Forward (will be applied along camera direction)
         break
       case 's':
       case 'S':
         this.downKeys.s = true
-        this.velocity.x = -this.player.speed
+        this.velocity.x = -this.player.speed // Backward (will be applied opposite camera direction)
         break
       case 'a':
       case 'A':
@@ -159,51 +163,28 @@ export default class Control {
         this.velocity.z = this.player.speed
         break
       case ' ':
-        if (this.player.mode === Mode.sneaking && !this.isJumping) {
-          return
-        }
-        if (this.player.mode === Mode.walking) {
-          // jump
-          if (!this.isJumping) {
-            this.velocity.y = 8
-            this.isJumping = true
-            this.downCollide = false
-            this.far = 0
-            setTimeout(() => {
-              this.far = this.player.body.height
-            }, 300)
-          }
+        // Space: Toggle speed (walking speed <-> sprint flying speed)
+        e.preventDefault() // Prevent page scroll
+        this.isFastMode = !this.isFastMode
+        if (this.isFastMode) {
+          this.player.speed = Speed.sprintFlying
         } else {
-          this.velocity.y += this.player.speed
+          this.player.speed = Speed.walking
         }
-        if (this.player.mode === Mode.walking && !this.spaceHolding) {
-          this.spaceHolding = true
-          this.jumpInterval = setInterval(() => {
-            this.setMovementHandler(e)
-          }, 10)
+        // Update current velocities to match new speed
+        if (this.velocity.x !== 0) {
+          this.velocity.x = this.velocity.x > 0 ? this.player.speed : -this.player.speed
+        }
+        if (this.velocity.z !== 0) {
+          this.velocity.z = this.velocity.z > 0 ? this.player.speed : -this.player.speed
+        }
+        if (this.velocity.y !== 0) {
+          this.velocity.y = this.velocity.y > 0 ? this.player.speed : -this.player.speed
         }
         break
       case 'Shift':
-        if (this.player.mode === Mode.walking) {
-          if (!this.isJumping) {
-            this.player.setMode(Mode.sneaking)
-            if (this.downKeys.w) {
-              this.velocity.x = this.player.speed
-            }
-            if (this.downKeys.s) {
-              this.velocity.x = -this.player.speed
-            }
-            if (this.downKeys.a) {
-              this.velocity.z = -this.player.speed
-            }
-            if (this.downKeys.d) {
-              this.velocity.z = this.player.speed
-            }
-            this.camera.position.setY(this.camera.position.y - 0.2)
-          }
-        } else {
-          this.velocity.y -= this.player.speed
-        }
+        // Shift: Move down (same as Q for consistency)
+        this.velocity.y = -this.player.speed
         break
       default:
         break
@@ -236,39 +217,22 @@ export default class Control {
         this.downKeys.d = false
         this.velocity.z = 0
         break
-      case ' ':
-        if (this.player.mode === Mode.sneaking && !this.isJumping) {
-          return
-        }
-        this.jumpInterval && clearInterval(this.jumpInterval)
-        this.spaceHolding = false
-        if (this.player.mode === Mode.walking) {
-          return
-        }
+      case 'q':
+      case 'Q':
+        // Q: Stop vertical movement
         this.velocity.y = 0
         break
+      case 'e':
+      case 'E':
+        // E: Stop vertical movement
+        this.velocity.y = 0
+        break
+      case ' ':
+        // Space: Toggle behavior - do nothing on keyup
+        // Speed toggle is handled on keydown only for true toggle behavior
+        break
       case 'Shift':
-        if (this.player.mode === Mode.sneaking) {
-          if (!this.isJumping) {
-            this.player.setMode(Mode.walking)
-            if (this.downKeys.w) {
-              this.velocity.x = this.player.speed
-            }
-            if (this.downKeys.s) {
-              this.velocity.x = -this.player.speed
-            }
-            if (this.downKeys.a) {
-              this.velocity.z = -this.player.speed
-            }
-            if (this.downKeys.d) {
-              this.velocity.z = this.player.speed
-            }
-            this.camera.position.setY(this.camera.position.y + 0.2)
-          }
-        }
-        if (this.player.mode === Mode.walking) {
-          return
-        }
+        // Shift: Stop vertical movement
         this.velocity.y = 0
         break
       default:
@@ -284,8 +248,61 @@ export default class Control {
     const matrix = new THREE.Matrix4()
 
     switch (e.button) {
-      // left click to remove block
+      // left click to place block
       case 0:
+        {
+          if (block && block.object instanceof THREE.InstancedMesh) {
+            // calculate normal and position
+            const normal = block.face!.normal
+            block.object.getMatrixAt(block.instanceId!, matrix)
+            const position = new THREE.Vector3().setFromMatrixPosition(matrix)
+
+            // return when block overlaps with player
+            if (
+              position.x + normal.x === Math.round(this.camera.position.x) &&
+              position.z + normal.z === Math.round(this.camera.position.z) &&
+              (position.y + normal.y === Math.round(this.camera.position.y) ||
+                position.y + normal.y ===
+                  Math.round(this.camera.position.y - 1))
+            ) {
+              return
+            }
+
+            // put the block
+            matrix.setPosition(
+              normal.x + position.x,
+              normal.y + position.y,
+              normal.z + position.z
+            )
+            this.terrain.blocks[this.holdingBlock].setMatrixAt(
+              this.terrain.getCount(this.holdingBlock),
+              matrix
+            )
+            this.terrain.setCount(this.holdingBlock)
+
+            //sound effect
+            this.audio.playSound(this.holdingBlock)
+
+            // update
+            this.terrain.blocks[this.holdingBlock].instanceMatrix.needsUpdate =
+              true
+
+            // add to custom blocks
+            this.terrain.customBlocks.push(
+              new Block(
+                normal.x + position.x,
+                normal.y + position.y,
+                normal.z + position.z,
+                this.holdingBlock,
+                true
+              )
+            )
+          }
+        }
+        break
+
+      // right click to remove block
+      case 2:
         {
           if (block && block.object instanceof THREE.InstancedMesh) {
             // calculate position
@@ -386,59 +403,6 @@ export default class Control {
           }
         }
         break
-
-      // right click to put block
-      case 2:
-        {
-          if (block && block.object instanceof THREE.InstancedMesh) {
-            // calculate normal and position
-            const normal = block.face!.normal
-            block.object.getMatrixAt(block.instanceId!, matrix)
-            const position = new THREE.Vector3().setFromMatrixPosition(matrix)
-
-            // return when block overlaps with player
-            if (
-              position.x + normal.x === Math.round(this.camera.position.x) &&
-              position.z + normal.z === Math.round(this.camera.position.z) &&
-              (position.y + normal.y === Math.round(this.camera.position.y) ||
-                position.y + normal.y ===
-                  Math.round(this.camera.position.y - 1))
-            ) {
-              return
-            }
-
-            // put the block
-            matrix.setPosition(
-              normal.x + position.x,
-              normal.y + position.y,
-              normal.z + position.z
-            )
-            this.terrain.blocks[this.holdingBlock].setMatrixAt(
-              this.terrain.getCount(this.holdingBlock),
-              matrix
-            )
-            this.terrain.setCount(this.holdingBlock)
-
-            //sound effect
-            this.audio.playSound(this.holdingBlock)
-
-            // update
-            this.terrain.blocks[this.holdingBlock].instanceMatrix.needsUpdate =
-              true
-
-            // add to custom blocks
-            this.terrain.customBlocks.push(
-              new Block(
-                normal.x + position.x,
-                normal.y + position.y,
-                normal.z + position.z,
-                this.holdingBlock,
-                true
-              )
-            )
-          }
-        }
-        break
       default:
         break
     }
@@ -522,6 +486,13 @@ export default class Control {
   moveZ = (distance: number, delta: number) => {
     this.camera.position.z +=
       distance * (this.player.speed / Math.PI) * 2 * delta
+  }
+
+  // Get camera's forward direction vector (including pitch/vertical angle)
+  getCameraForwardVector(): THREE.Vector3 {
+    const direction = new THREE.Vector3()
+    this.camera.getWorldDirection(direction)
+    return direction
   }
 
   // collide checking
@@ -703,470 +674,31 @@ export default class Control {
   update = () => {
     this.p1 = performance.now()
     const delta = (this.p1 - this.p2) / 1000
-    if (
-      // dev mode
-      this.player.mode === Mode.flying
-    ) {
-      this.control.moveForward(this.velocity.x * delta)
+    
+    // Always in flying mode (physics and collisions removed)
+    // Forward/backward movement along camera direction (including vertical component)
+    if (this.velocity.x !== 0) {
+      const forwardVector = this.getCameraForwardVector()
+      const movementDistance = this.velocity.x * delta
+      this.camera.position.addScaledVector(forwardVector, movementDistance)
+    }
+    
+    // Strafe left/right (horizontal only, camera-relative)
+    if (this.velocity.z !== 0) {
       this.control.moveRight(this.velocity.z * delta)
+    }
+    
+    // Vertical movement (absolute Y axis)
+    if (this.velocity.y !== 0) {
       this.camera.position.y += this.velocity.y * delta
-    } else {
-      // normal mode
-      this.collideCheckAll(
-        this.camera.position,
-        this.terrain.noise,
-        this.terrain.customBlocks,
-        this.far - this.velocity.y * delta
-      )
-
-      // gravity
-      if (Math.abs(this.velocity.y) < this.player.falling) {
-        this.velocity.y -= 25 * delta
-      }
-
-      // up collide handler
-      if (this.upCollide) {
-        this.velocity.y = -225 * delta
-        this.far = this.player.body.height
-      }
-
-      // down collide and jump handler
-      if (this.downCollide && !this.isJumping) {
-        this.velocity.y = 0
-      } else if (this.downCollide && this.isJumping) {
-        this.isJumping = false
-      }
-
-      // side collide handler
-      let vector = new THREE.Vector3(0, 0, -1).applyQuaternion(
-        this.camera.quaternion
-      )
-      let direction = Math.atan2(vector.x, vector.z)
-      if (
-        this.frontCollide ||
-        this.backCollide ||
-        this.leftCollide ||
-        this.rightCollide
-      ) {
-        // collide front (positive x)
-        if (this.frontCollide) {
-          // camera front
-          if (direction < Math.PI && direction > 0 && this.velocity.x > 0) {
-            if (
-              (!this.leftCollide && direction > Math.PI / 2) ||
-              (!this.rightCollide && direction < Math.PI / 2)
-            ) {
-              this.moveZ(Math.PI / 2 - direction, delta)
-            }
-          } else if (
-            !this.leftCollide &&
-            !this.rightCollide &&
-            this.velocity.x > 0
-          ) {
-            this.control.moveForward(this.velocity.x * delta)
-          }
-
-          // camera back
-          if (direction < 0 && direction > -Math.PI && this.velocity.x < 0) {
-            if (
-              (!this.leftCollide && direction > -Math.PI / 2) ||
-              (!this.rightCollide && direction < -Math.PI / 2)
-            ) {
-              this.moveZ(-Math.PI / 2 - direction, delta)
-            }
-          } else if (
-            !this.leftCollide &&
-            !this.rightCollide &&
-            this.velocity.x < 0
-          ) {
-            this.control.moveForward(this.velocity.x * delta)
-          }
-
-          // camera left
-          if (
-            direction < Math.PI / 2 &&
-            direction > -Math.PI / 2 &&
-            this.velocity.z < 0
-          ) {
-            if (
-              (!this.rightCollide && direction < 0) ||
-              (!this.leftCollide && direction > 0)
-            ) {
-              this.moveZ(-direction, delta)
-            }
-          } else if (
-            !this.leftCollide &&
-            !this.rightCollide &&
-            this.velocity.z < 0
-          ) {
-            this.control.moveRight(this.velocity.z * delta)
-          }
-
-          // camera right
-          if (
-            (direction < -Math.PI / 2 || direction > Math.PI / 2) &&
-            this.velocity.z > 0
-          ) {
-            if (!this.rightCollide && direction > 0) {
-              this.moveZ(Math.PI - direction, delta)
-            }
-            if (!this.leftCollide && direction < 0) {
-              this.moveZ(-Math.PI - direction, delta)
-            }
-          } else if (
-            !this.leftCollide &&
-            !this.rightCollide &&
-            this.velocity.z > 0
-          ) {
-            this.control.moveRight(this.velocity.z * delta)
-          }
-        }
-
-        // collide back (negative x)
-        if (this.backCollide) {
-          // camera front
-          if (direction < 0 && direction > -Math.PI && this.velocity.x > 0) {
-            if (
-              (!this.leftCollide && direction < -Math.PI / 2) ||
-              (!this.rightCollide && direction > -Math.PI / 2)
-            ) {
-              this.moveZ(Math.PI / 2 + direction, delta)
-            }
-          } else if (
-            !this.leftCollide &&
-            !this.rightCollide &&
-            this.velocity.x > 0
-          ) {
-            this.control.moveForward(this.velocity.x * delta)
-          }
-
-          // camera back
-          if (direction < Math.PI && direction > 0 && this.velocity.x < 0) {
-            if (
-              (!this.leftCollide && direction < Math.PI / 2) ||
-              (!this.rightCollide && direction > Math.PI / 2)
-            ) {
-              this.moveZ(direction - Math.PI / 2, delta)
-            }
-          } else if (
-            !this.leftCollide &&
-            !this.rightCollide &&
-            this.velocity.x < 0
-          ) {
-            this.control.moveForward(this.velocity.x * delta)
-          }
-
-          // camera left
-          if (
-            (direction < -Math.PI / 2 || direction > Math.PI / 2) &&
-            this.velocity.z < 0
-          ) {
-            if (!this.leftCollide && direction > 0) {
-              this.moveZ(-Math.PI + direction, delta)
-            }
-            if (!this.rightCollide && direction < 0) {
-              this.moveZ(Math.PI + direction, delta)
-            }
-          } else if (
-            !this.leftCollide &&
-            !this.rightCollide &&
-            this.velocity.z < 0
-          ) {
-            this.control.moveRight(this.velocity.z * delta)
-          }
-
-          // camera right
-          if (
-            direction < Math.PI / 2 &&
-            direction > -Math.PI / 2 &&
-            this.velocity.z > 0
-          ) {
-            if (
-              (!this.leftCollide && direction < 0) ||
-              (!this.rightCollide && direction > 0)
-            ) {
-              this.moveZ(direction, delta)
-            }
-          } else if (
-            !this.leftCollide &&
-            !this.rightCollide &&
-            this.velocity.z > 0
-          ) {
-            this.control.moveRight(this.velocity.z * delta)
-          }
-        }
-
-        // collide left (negative z)
-        if (this.leftCollide) {
-          // camera front
-          if (
-            (direction < -Math.PI / 2 || direction > Math.PI / 2) &&
-            this.velocity.x > 0
-          ) {
-            if (!this.frontCollide && direction > 0) {
-              this.moveX(Math.PI - direction, delta)
-            }
-            if (!this.backCollide && direction < 0) {
-              this.moveX(-Math.PI - direction, delta)
-            }
-          } else if (
-            !this.frontCollide &&
-            !this.backCollide &&
-            this.velocity.x > 0
-          ) {
-            this.control.moveForward(this.velocity.x * delta)
-          } else if (
-            this.frontCollide &&
-            direction < 0 &&
-            direction > -Math.PI / 2 &&
-            this.velocity.x > 0
-          ) {
-            this.control.moveForward(this.velocity.x * delta)
-          } else if (
-            this.backCollide &&
-            direction < Math.PI / 2 &&
-            direction > 0 &&
-            this.velocity.x > 0
-          ) {
-            this.control.moveForward(this.velocity.x * delta)
-          }
-
-          // camera back
-          if (
-            direction < Math.PI / 2 &&
-            direction > -Math.PI / 2 &&
-            this.velocity.x < 0
-          ) {
-            if (
-              (!this.frontCollide && direction < 0) ||
-              (!this.backCollide && direction > 0)
-            ) {
-              this.moveX(-direction, delta)
-            }
-          } else if (
-            !this.frontCollide &&
-            !this.backCollide &&
-            this.velocity.x < 0
-          ) {
-            this.control.moveForward(this.velocity.x * delta)
-          } else if (
-            this.frontCollide &&
-            direction < Math.PI &&
-            direction > Math.PI / 2 &&
-            this.velocity.x < 0
-          ) {
-            this.control.moveForward(this.velocity.x * delta)
-          } else if (
-            this.backCollide &&
-            direction > -Math.PI &&
-            direction < -Math.PI / 2 &&
-            this.velocity.x < 0
-          ) {
-            this.control.moveForward(this.velocity.x * delta)
-          }
-
-          // camera left
-          if (direction > 0 && direction < Math.PI && this.velocity.z < 0) {
-            if (
-              (!this.backCollide && direction > Math.PI / 2) ||
-              (!this.frontCollide && direction < Math.PI / 2)
-            ) {
-              this.moveX(Math.PI / 2 - direction, delta)
-            }
-          } else if (
-            !this.frontCollide &&
-            !this.backCollide &&
-            this.velocity.z < 0
-          ) {
-            this.control.moveRight(this.velocity.z * delta)
-          } else if (
-            this.frontCollide &&
-            direction > -Math.PI &&
-            direction < -Math.PI / 2 &&
-            this.velocity.z < 0
-          ) {
-            this.control.moveRight(this.velocity.z * delta)
-          } else if (
-            this.backCollide &&
-            direction > -Math.PI / 2 &&
-            direction < 0 &&
-            this.velocity.z < 0
-          ) {
-            this.control.moveRight(this.velocity.z * delta)
-          }
-
-          // camera right
-          if (direction < 0 && direction > -Math.PI && this.velocity.z > 0) {
-            if (
-              (!this.backCollide && direction > -Math.PI / 2) ||
-              (!this.frontCollide && direction < -Math.PI / 2)
-            ) {
-              this.moveX(-Math.PI / 2 - direction, delta)
-            }
-          } else if (
-            !this.frontCollide &&
-            !this.backCollide &&
-            this.velocity.z > 0
-          ) {
-            this.control.moveRight(this.velocity.z * delta)
-          } else if (
-            this.frontCollide &&
-            direction < Math.PI / 2 &&
-            direction > 0 &&
-            this.velocity.z > 0
-          ) {
-            this.control.moveRight(this.velocity.z * delta)
-          } else if (
-            this.backCollide &&
-            direction < Math.PI &&
-            direction > Math.PI / 2 &&
-            this.velocity.z > 0
-          ) {
-            this.control.moveRight(this.velocity.z * delta)
-          }
-        }
-
-        // collide right (positive z)
-        if (this.rightCollide) {
-          // camera front
-          if (
-            direction < Math.PI / 2 &&
-            direction > -Math.PI / 2 &&
-            this.velocity.x > 0
-          ) {
-            if (
-              (!this.backCollide && direction < 0) ||
-              (!this.frontCollide && direction > 0)
-            ) {
-              this.moveX(direction, delta)
-            }
-          } else if (
-            !this.frontCollide &&
-            !this.backCollide &&
-            this.velocity.x > 0
-          ) {
-            this.control.moveForward(this.velocity.x * delta)
-          } else if (
-            this.frontCollide &&
-            direction < -Math.PI / 2 &&
-            direction > -Math.PI &&
-            this.velocity.x > 0
-          ) {
-            this.control.moveForward(this.velocity.x * delta)
-          } else if (
-            this.backCollide &&
-            direction < Math.PI &&
-            direction > Math.PI / 2 &&
-            this.velocity.x > 0
-          ) {
-            this.control.moveForward(this.velocity.x * delta)
-          }
-
-          // camera back
-          if (
-            (direction < -Math.PI / 2 || direction > Math.PI / 2) &&
-            this.velocity.x < 0
-          ) {
-            if (!this.backCollide && direction > 0) {
-              this.moveX(-Math.PI + direction, delta)
-            }
-            if (!this.frontCollide && direction < 0) {
-              this.moveX(Math.PI + direction, delta)
-            }
-          } else if (
-            !this.frontCollide &&
-            !this.backCollide &&
-            this.velocity.x < 0
-          ) {
-            this.control.moveForward(this.velocity.x * delta)
-          } else if (
-            this.frontCollide &&
-            direction < Math.PI / 2 &&
-            direction > 0 &&
-            this.velocity.x < 0
-          ) {
-            this.control.moveForward(this.velocity.x * delta)
-          } else if (
-            this.backCollide &&
-            direction < 0 &&
-            direction > -Math.PI / 2 &&
-            this.velocity.x < 0
-          ) {
-            this.control.moveForward(this.velocity.x * delta)
-          }
-
-          // camera left
-          if (direction < 0 && direction > -Math.PI && this.velocity.z < 0) {
-            if (
-              (!this.frontCollide && direction > -Math.PI / 2) ||
-              (!this.backCollide && direction < -Math.PI / 2)
-            ) {
-              this.moveX(Math.PI / 2 + direction, delta)
-            }
-          } else if (
-            !this.frontCollide &&
-            !this.backCollide &&
-            this.velocity.z < 0
-          ) {
-            this.control.moveRight(this.velocity.z * delta)
-          } else if (
-            this.frontCollide &&
-            direction > Math.PI / 2 &&
-            direction < Math.PI &&
-            this.velocity.z < 0
-          ) {
-            this.control.moveRight(this.velocity.z * delta)
-          } else if (
-            this.backCollide &&
-            direction > 0 &&
-            direction < Math.PI / 2 &&
-            this.velocity.z < 0
-          ) {
-            this.control.moveRight(this.velocity.z * delta)
-          }
-
-          // camera right
-          if (direction > 0 && direction < Math.PI && this.velocity.z > 0) {
-            if (
-              (!this.frontCollide && direction > Math.PI / 2) ||
-              (!this.backCollide && direction < Math.PI / 2)
-            ) {
-              this.moveX(direction - Math.PI / 2, delta)
-            }
-          } else if (
-            !this.frontCollide &&
-            !this.backCollide &&
-            this.velocity.z > 0
-          ) {
-            this.control.moveRight(this.velocity.z * delta)
-          } else if (
-            this.frontCollide &&
-            direction > -Math.PI / 2 &&
-            direction < 0 &&
-            this.velocity.z > 0
-          ) {
-            this.control.moveRight(this.velocity.z * delta)
-          } else if (
-            this.backCollide &&
-            direction > -Math.PI &&
-            direction < -Math.PI / 2 &&
-            this.velocity.z > 0
-          ) {
-            this.control.moveRight(this.velocity.z * delta)
-          }
-        }
-      } else {
-        // no collide
-        this.control.moveForward(this.velocity.x * delta)
-        this.control.moveRight(this.velocity.z * delta)
-      }
-
-      this.camera.position.y += this.velocity.y * delta
-
-      // catching net
-      if (this.camera.position.y < -100) {
-        this.camera.position.y = 60
-      }
+    }
+    
+    // Legacy collision code removed - always in flying mode
+    // All collision checking and physics removed (M1.2)
+    
+    // Safety net: prevent falling too far below ground
+    if (this.camera.position.y < -100) {
+      this.camera.position.y = 60
     }
     this.p2 = this.p1
   }

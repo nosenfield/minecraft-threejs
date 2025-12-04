@@ -17,7 +17,7 @@ export enum Speed {
   sneaking = 2.55
 }
 export default class Player {
-  mode = Mode.walking
+  mode = Mode.flying
   speed = Speed[this.mode]
 
   setMode(Mode: Mode) {

@@ -20,9 +20,13 @@ export default class Core {
     this.camera.near = 0.01
     this.camera.far = 500
     this.camera.updateProjectionMatrix()
-    this.camera.position.set(8, 50, 8)
+    this.camera.position.set(40, 10, 40)
 
-    this.camera.lookAt(100, 30, 100)
+    // Look at center of ground plane (50, 0, 50) from above
+    // This creates an isometric-style view looking down at an angle
+    // Camera at (40, 10, 40) looking at (50, 0, 50) guarantees downward look
+    // (direction vector: (10, -10, 10) normalized ≈ (0.577, -0.577, 0.577))
+    this.camera.lookAt(50, 0, 50)
 
     window.addEventListener('resize', () => {
       this.camera.aspect = window.innerWidth / window.innerHeight
