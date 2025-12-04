@@ -288,15 +288,17 @@ export default class Control {
               true
 
             // add to custom blocks
-            this.terrain.customBlocks.push(
-              new Block(
-                normal.x + position.x,
-                normal.y + position.y,
-                normal.z + position.z,
-                this.holdingBlock,
-                true
-              )
+            const newBlock = new Block(
+              normal.x + position.x,
+              normal.y + position.y,
+              normal.z + position.z,
+              this.holdingBlock,
+              true
             )
+            this.terrain.customBlocks.push(newBlock)
+            // Performance: Update blocksMap for O(1) lookups
+            const blockKey = `${newBlock.x}_${newBlock.y}_${newBlock.z}`
+            this.terrain.blocksMap.set(blockKey, newBlock)
           }
         }
         break
@@ -309,12 +311,12 @@ export default class Control {
             block.object.getMatrixAt(block.instanceId!, matrix)
             const position = new THREE.Vector3().setFromMatrixPosition(matrix)
 
-            // don't remove bedrock
-            if (
-              (BlockType[block.object.name as any] as unknown as BlockType) ===
-              BlockType.bedrock
-            ) {
-              this.terrain.generateAdjacentBlocks(position)
+            // M2.5: Prevent removal of ground blocks
+            // Performance: Use Map for O(1) lookup instead of linear search
+            const blockKey = `${position.x}_${position.y}_${position.z}`
+            const blockData = this.terrain.blocksMap.get(blockKey)
+            if (blockData?.isGround === true) {
+              // Ground blocks cannot be removed
               return
             }
 
@@ -372,34 +374,31 @@ export default class Control {
             // update
             block.object.instanceMatrix.needsUpdate = true
 
-            // check existence
+            // Performance: Use Map for O(1) lookup instead of linear search
+            // Reuse blockKey from above (line 316)
+            const existingBlock = this.terrain.blocksMap.get(blockKey)
             let existed = false
-            for (const customBlock of this.terrain.customBlocks) {
-              if (
-                customBlock.x === position.x &&
-                customBlock.y === position.y &&
-                customBlock.z === position.z
-              ) {
-                existed = true
-                customBlock.placed = false
-              }
+            if (existingBlock) {
+              existed = true
+              existingBlock.placed = false
             }
 
             // add to custom blocks when it's not existed
             if (!existed) {
-              this.terrain.customBlocks.push(
-                new Block(
-                  position.x,
-                  position.y,
-                  position.z,
-                  BlockType[block.object.name as any] as unknown as BlockType,
-                  false
-                )
+              const removedBlock = new Block(
+                position.x,
+                position.y,
+                position.z,
+                BlockType[block.object.name as any] as unknown as BlockType,
+                false
               )
+              this.terrain.customBlocks.push(removedBlock)
+              // Performance: Update blocksMap for O(1) lookups
+              const blockKey = `${position.x}_${position.y}_${position.z}`
+              this.terrain.blocksMap.set(blockKey, removedBlock)
             }
 
-            // generate adjacent blocks
-            this.terrain.generateAdjacentBlocks(position)
+            // M2.1: generateAdjacentBlocks removed - no longer needed without procedural terrain
           }
         }
         break

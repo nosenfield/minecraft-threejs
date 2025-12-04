@@ -35,47 +35,8 @@ import { isMobile } from '../utils'
 
 export default class Audio {
   constructor(camera: THREE.PerspectiveCamera) {
-    if (isMobile) return
-
-    const listener = new THREE.AudioListener()
-    const audioLoader = new THREE.AudioLoader()
-    camera.add(listener)
-
-    // load bgm
-    const bgm = new THREE.Audio(listener)
-    bgm.autoplay = false
-    audioLoader.load(hal3, buffer => {
-      bgm.setBuffer(buffer)
-      bgm.setVolume(0.1)
-      bgm.setLoop(true)
-      if (bgm.isPlaying) {
-        bgm.pause()
-        bgm.play()
-      }
-    })
-
-    // play / pause bgm
-    document.addEventListener('pointerlockchange', () => {
-      if (document.pointerLockElement && !bgm.isPlaying && !this.disabled) {
-        bgm.play()
-      } else {
-        bgm.pause()
-      }
-    })
-
-    // load sound effect
-    for (const types of this.sourceSet) {
-      const audios: THREE.Audio[] = []
-      for (const type of types) {
-        audioLoader.load(type, buffer => {
-          const audio = new THREE.Audio(listener!)
-          audio.setBuffer(buffer)
-          audio.setVolume(0.15)
-          audios.push(audio)
-        })
-      }
-      this.soundSet.push(audios)
-    }
+    // M2.3: Audio disabled - early return to skip initialization
+    return
   }
 
   disabled = false
@@ -99,9 +60,7 @@ export default class Audio {
   index = 0
 
   playSound(type: BlockType) {
-    if (!this.disabled && !isMobile) {
-      this.index++ === 3 && (this.index = 0)
-      this.soundSet[type]?.[this.index]?.play()
-    }
+    // M2.3: Audio disabled - no-op method
+    return
   }
 }

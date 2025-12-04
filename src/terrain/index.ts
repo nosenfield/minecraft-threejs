@@ -85,9 +85,11 @@ export default class Terrain {
   // other properties
   blocks: THREE.InstancedMesh[] = []
   blocksCount: number[] = []
-  blocksFactor = [1, 0.2, 0.1, 0.7, 0.1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+  blocksFactor = [1, 0.2, 0.1, 0.7, 0.1, 1.0, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1] // M2.4: Increased stone (index 5) factor to 1.0 to support 10,000 ground blocks
 
   customBlocks: Block[] = []
+  // Performance: Map for O(1) block lookups by position (key: `${x}_${y}_${z}`)
+  blocksMap = new Map<string, Block>()
   highlight: Highlight
 
   idMap = new Map<string, number>()
@@ -136,6 +138,61 @@ export default class Terrain {
     }
 
     this.blocksCount = new Array(this.materialType.length).fill(0)
+    
+    // M2.4: Create ground plane after initializing blocks
+    this.createGroundPlane()
+  }
+  
+  // M2.4: Create 100x100 grey ground plane at Y=0 with yellow marker blocks
+  createGroundPlane = () => {
+    const groundSize = 100
+    const groundColor = BlockType.stone // Use stone type temporarily (grey-ish), will be replaced with color system in M3.1
+    const markerColor = BlockType.diamond // Use diamond for yellow markers (bright/visible), will be replaced with yellow color in M3.1
+    const matrix = new THREE.Matrix4()
+    
+    // Performance: Create InstancedMesh for yellow markers instead of individual meshes
+    const yellowMaterial = new THREE.MeshStandardMaterial({ color: 0xffff00 }) // Bright yellow
+    const yellowGeometry = new THREE.BoxGeometry(1, 1, 1)
+    const yellowMarkerMesh = new THREE.InstancedMesh(yellowGeometry, yellowMaterial, 121) // 11x11 = 121 markers
+    let yellowMarkerIndex = 0
+    
+    // Generate 100x100 blocks at Y=0 (X: 0-99, Z: 0-99)
+    for (let x = 0; x < groundSize; x++) {
+      for (let z = 0; z < groundSize; z++) {
+        const position = new THREE.Vector3(x, 0, z)
+        const blockKey = `${x}_0_${z}` // Key for blocksMap lookup
+        // Yellow markers at grid intersections: where both x and z are multiples of 10
+        const isMarker = (x % 10 === 0) && (z % 10 === 0)
+        
+        if (isMarker) {
+          // Create bright yellow marker block using InstancedMesh
+          matrix.setPosition(position)
+          yellowMarkerMesh.setMatrixAt(yellowMarkerIndex++, matrix)
+          
+          // Add to customBlocks with isGround flag
+          const block = new Block(x, 0, z, markerColor, true, true)
+          this.customBlocks.push(block)
+          this.blocksMap.set(blockKey, block) // Add to Map for O(1) lookup
+        } else {
+          // Create regular grey ground block
+          const block = new Block(x, 0, z, groundColor, true, true)
+          this.customBlocks.push(block)
+          this.blocksMap.set(blockKey, block) // Add to Map for O(1) lookup
+          
+          // Render block using InstancedMesh
+          matrix.setPosition(position)
+          this.blocks[groundColor].setMatrixAt(this.getCount(groundColor), matrix)
+          this.setCount(groundColor)
+        }
+      }
+    }
+    
+    // Add yellow marker InstancedMesh to scene and update
+    yellowMarkerMesh.instanceMatrix.needsUpdate = true
+    this.scene.add(yellowMarkerMesh)
+    
+    // Update instance matrix for rendering
+    this.blocks[groundColor].instanceMatrix.needsUpdate = true
   }
 
   resetBlocks = () => {
@@ -149,59 +206,10 @@ export default class Terrain {
   }
 
   generate = () => {
-    this.blocksCount = new Array(this.blocks.length).fill(0)
-    // post work to generate worker
-    this.generateWorker.postMessage({
-      distance: this.distance,
-      chunk: this.chunk,
-      noiseSeed: this.noise.seed,
-      treeSeed: this.noise.treeSeed,
-      stoneSeed: this.noise.stoneSeed,
-      coalSeed: this.noise.coalSeed,
-      idMap: new Map<string, number>(),
-      blocksFactor: this.blocksFactor,
-      blocksCount: this.blocksCount,
-      customBlocks: this.customBlocks,
-      chunkSize: this.chunkSize
-    })
-
-    // cloud
-
-    if (this.cloudGap++ > 5) {
-      this.cloudGap = 0
-      this.cloud.instanceMatrix = new THREE.InstancedBufferAttribute(
-        new Float32Array(1000 * 16),
-        16
-      )
-      this.cloudCount = 0
-      for (
-        let x =
-          -this.chunkSize * this.distance * 3 + this.chunkSize * this.chunk.x;
-        x <
-        this.chunkSize * this.distance * 3 +
-          this.chunkSize +
-          this.chunkSize * this.chunk.x;
-        x += 20
-      ) {
-        for (
-          let z =
-            -this.chunkSize * this.distance * 3 + this.chunkSize * this.chunk.y;
-          z <
-          this.chunkSize * this.distance * 3 +
-            this.chunkSize +
-            this.chunkSize * this.chunk.y;
-          z += 20
-        ) {
-          const matrix = new THREE.Matrix4()
-          matrix.setPosition(x, 80 + (Math.random() - 0.5) * 30, z)
-
-          if (Math.random() > 0.8) {
-            this.cloud.setMatrixAt(this.cloudCount++, matrix)
-          }
-        }
-      }
-      this.cloud.instanceMatrix.needsUpdate = true
-    }
+    // M2.1: Procedural terrain generation disabled
+    // M2.2: Cloud generation disabled
+    // This method is now a no-op to prevent errors from UI calls
+    return
   }
 
   // generate adjacent blocks after removing a block (vertical infinity world)
@@ -267,9 +275,10 @@ export default class Terrain {
     }
 
     // build block
-    this.customBlocks.push(
-      new Block(position.x, position.y, position.z, type, true)
-    )
+    const block = new Block(position.x, position.y, position.z, type, true)
+    this.customBlocks.push(block)
+    // Performance: Update blocksMap for O(1) lookups
+    this.blocksMap.set(`${position.x}_${position.y}_${position.z}`, block)
 
     const matrix = new THREE.Matrix4()
     matrix.setPosition(position)
@@ -279,18 +288,20 @@ export default class Terrain {
   }
 
   update = () => {
+    // M2.1: Chunk-based terrain generation disabled
+    // Chunk tracking kept for potential future use but generation skipped
     this.chunk.set(
       Math.floor(this.camera.position.x / this.chunkSize),
       Math.floor(this.camera.position.z / this.chunkSize)
     )
 
-    //generate terrain when getting into new chunk
-    if (
-      this.chunk.x !== this.previousChunk.x ||
-      this.chunk.y !== this.previousChunk.y
-    ) {
-      this.generate()
-    }
+    // Terrain generation on chunk change disabled (M2.1)
+    // if (
+    //   this.chunk.x !== this.previousChunk.x ||
+    //   this.chunk.y !== this.previousChunk.y
+    // ) {
+    //   this.generate()
+    // }
 
     this.previousChunk.copy(this.chunk)
 

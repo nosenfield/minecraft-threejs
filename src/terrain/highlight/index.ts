@@ -49,107 +49,30 @@ export default class BlockHighlight {
       16
     )
 
-    const position = this.camera.position
     const matrix = new THREE.Matrix4()
-    const idMap = new Map<string, number>()
-    const noise = this.terrain.noise
-
-    let xPos = Math.round(position.x)
-    let zPos = Math.round(position.z)
-
-    for (let i = -8; i < 8; i++) {
-      for (let j = -8; j < 8; j++) {
-        // check terrain
-        let x = xPos + i
-        let z = zPos + j
-        let y =
-          Math.floor(
-            noise.get(x / noise.gap, z / noise.gap, noise.seed) * noise.amp
-          ) + 30
-
-        idMap.set(`${x}_${y}_${z}`, this.index)
-        matrix.setPosition(x, y, z)
-        this.instanceMesh.setMatrixAt(this.index++, matrix)
-
-        let stoneOffset =
-          noise.get(x / noise.stoneGap, z / noise.stoneGap, noise.stoneSeed) *
-          noise.stoneAmp
-
-        let treeOffset =
-          noise.get(x / noise.treeGap, z / noise.treeGap, noise.treeSeed) *
-          noise.treeAmp
-
-        // check tree
-        if (
-          treeOffset > noise.treeThreshold &&
-          y - 30 >= -3 &&
-          stoneOffset < noise.stoneThreshold
-        ) {
-          for (let t = 1; t <= noise.treeHeight; t++) {
-            idMap.set(`${x}_${y + t}_${z}`, this.index)
-            matrix.setPosition(x, y + t, z)
-            this.instanceMesh.setMatrixAt(this.index++, matrix)
-          }
-
-          // leaf
-          // for (let i = -3; i < 3; i++) {
-          //   for (let j = -3; j < 3; j++) {
-          //     for (let k = -3; k < 3; k++) {
-          //       if (i === 0 && k === 0) {
-          //         continue
-          //       }
-          //     let leafOffset =
-          //       noise.get(
-          //         (x + i + j) / noise.leafGap,
-          //         (z + k) / noise.leafGap,
-          //         noise.leafSeed
-          //       ) * noise.leafAmp
-
-          //       if (leafOffset > noise.leafThreshold) {
-          //         idMap.set(
-          //           `${x + i}_${y + noise.treeHeight + j}_${z + k}`,
-          //           this.index
-          //         )
-          //         matrix.setPosition(x + i, y + noise.treeHeight + j, z + k)
-          //         this.instanceMesh.setMatrixAt(this.index++, matrix)
-          //       }
-          //     }
-          //   }
-          // }
-        }
-      }
-    }
-
-    // check custom blocks
+    const position = this.camera.position
+    const raycasterRange = 8 // Only check blocks within raycaster range
+    
+    // Performance: Spatial partitioning - only check blocks near camera
+    // M2.1: Procedural terrain generation disabled in highlight system
+    // Only use actual blocks from customBlocks array within range
+    const minX = Math.floor(position.x - raycasterRange)
+    const maxX = Math.ceil(position.x + raycasterRange)
+    const minY = Math.floor(position.y - raycasterRange)
+    const maxY = Math.ceil(position.y + raycasterRange)
+    const minZ = Math.floor(position.z - raycasterRange)
+    const maxZ = Math.ceil(position.z + raycasterRange)
+    
+    // Only iterate blocks within range (spatial partitioning)
     for (const block of this.terrain.customBlocks) {
-      if (block.placed) {
+      if (
+        block.placed &&
+        block.x >= minX && block.x <= maxX &&
+        block.y >= minY && block.y <= maxY &&
+        block.z >= minZ && block.z <= maxZ
+      ) {
         matrix.setPosition(block.x, block.y, block.z)
         this.instanceMesh.setMatrixAt(this.index++, matrix)
-      } else {
-        if (idMap.has(`${block.x}_${block.y}_${block.z}`)) {
-          let id = idMap.get(`${block.x}_${block.y}_${block.z}`)
-          this.instanceMesh.setMatrixAt(
-            id!,
-            new THREE.Matrix4().set(
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0,
-              0
-            )
-          )
-        }
       }
     }
 
