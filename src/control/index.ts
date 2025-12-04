@@ -245,12 +245,8 @@ export default class Control {
     e.preventDefault()
     // let p1 = performance.now()
     this.raycaster.setFromCamera({ x: 0, y: 0 }, this.camera)
-    // Include yellow marker mesh in raycaster check (it's not in terrain.blocks[])
-    const objectsToCheck = [...this.terrain.blocks]
-    if (this.terrain.yellowMarkerMesh) {
-      objectsToCheck.push(this.terrain.yellowMarkerMesh)
-    }
-    const block = this.raycaster.intersectObjects(objectsToCheck)[0]
+    // Get all meshes that should be included in raycaster checks
+    const block = this.raycaster.intersectObjects(this.terrain.getRaycastTargets())[0]
     const matrix = new THREE.Matrix4()
 
     switch (e.button) {
