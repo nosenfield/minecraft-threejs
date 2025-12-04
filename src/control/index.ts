@@ -7,7 +7,16 @@ import Block from '../terrain/mesh/block'
 import Noise from '../terrain/noise'
 import Audio from '../audio'
 import { isMobile } from '../utils'
-import { BLOCK_INTERACTION_RANGE } from '../constants'
+import { 
+  BLOCK_INTERACTION_RANGE,
+  BLOCK_X_MIN,
+  BLOCK_X_MAX,
+  BLOCK_Z_MIN,
+  BLOCK_Z_MAX,
+  BLOCK_Y_MIN,
+  BLOCK_Y_MAX,
+  MAX_USER_BLOCKS
+} from '../constants'
 enum Side {
   front,
   back,
@@ -84,18 +93,19 @@ export default class Control {
   raycaster: THREE.Raycaster
   far: number
 
-  holdingBlock = BlockType.grass
+  holdingBlock = BlockType.red // M3.5: Default to red (button 1)
   holdingBlocks = [
-    BlockType.grass,
-    BlockType.stone,
-    BlockType.tree,
-    BlockType.wood,
-    BlockType.diamond,
-    BlockType.quartz,
-    BlockType.glass,
-    BlockType.grass,
-    BlockType.grass,
-    BlockType.grass
+    // M3.5: Map buttons 1-0 to colors (removed indigo, moved violet to 6, added brown to 7)
+    BlockType.red,    // Button 1
+    BlockType.orange, // Button 2
+    BlockType.yellow, // Button 3
+    BlockType.green,  // Button 4
+    BlockType.blue,   // Button 5
+    BlockType.violet, // Button 6
+    BlockType.brown,  // Button 7
+    BlockType.white,  // Button 8
+    BlockType.gray,   // Button 9
+    BlockType.black   // Button 0
   ]
   holdingIndex = 0
   wheelGap = false
@@ -262,12 +272,29 @@ export default class Control {
               return
             }
 
+            // M3.6: Calculate placement position and check coordinate bounds
+            const placeX = normal.x + position.x
+            const placeY = normal.y + position.y
+            const placeZ = normal.z + position.z
+
+            // Check coordinate bounds
+            if (
+              placeX < BLOCK_X_MIN || placeX > BLOCK_X_MAX ||
+              placeZ < BLOCK_Z_MIN || placeZ > BLOCK_Z_MAX ||
+              placeY < BLOCK_Y_MIN || placeY > BLOCK_Y_MAX
+            ) {
+              // Block placement outside bounds - silently fail
+              return
+            }
+
+            // M3.7: Check block limit (exclude ground blocks)
+            if (this.terrain.getUserPlacedBlockCount() >= MAX_USER_BLOCKS) {
+              // Block limit reached - silently fail
+              return
+            }
+
             // put the block
-            matrix.setPosition(
-              normal.x + position.x,
-              normal.y + position.y,
-              normal.z + position.z
-            )
+            matrix.setPosition(placeX, placeY, placeZ)
             this.terrain.blocks[this.holdingBlock].setMatrixAt(
               this.terrain.getCount(this.holdingBlock),
               matrix
@@ -283,9 +310,9 @@ export default class Control {
 
             // add to custom blocks
             const newBlock = new Block(
-              normal.x + position.x,
-              normal.y + position.y,
-              normal.z + position.z,
+              placeX,
+              placeY,
+              placeZ,
               this.holdingBlock,
               true
             )
@@ -293,6 +320,8 @@ export default class Control {
             // Performance: Update blocksMap for O(1) lookups
             const blockKey = `${newBlock.x}_${newBlock.y}_${newBlock.z}`
             this.terrain.blocksMap.set(blockKey, newBlock)
+            // Performance: Increment user-placed block counter (O(1) instead of filtering)
+            this.terrain.incrementUserPlacedCount()
           }
         }
         break
@@ -375,6 +404,10 @@ export default class Control {
             if (existingBlock) {
               existed = true
               existingBlock.placed = false
+              // Performance: Decrement user-placed block counter if it was a user-placed block
+              if (existingBlock.isGround !== true) {
+                this.terrain.decrementUserPlacedCount()
+              }
             }
 
             // add to custom blocks when it's not existed
@@ -390,6 +423,7 @@ export default class Control {
               // Performance: Update blocksMap for O(1) lookups
               const blockKey = `${position.x}_${position.y}_${position.z}`
               this.terrain.blocksMap.set(blockKey, removedBlock)
+              // Note: removedBlock.placed is false, so we don't increment counter here
             }
 
             // M2.1: generateAdjacentBlocks removed - no longer needed without procedural terrain
@@ -415,12 +449,16 @@ export default class Control {
   }
 
   changeHoldingBlockHandler = (e: KeyboardEvent) => {
-    if (isNaN(parseInt(e.key)) || e.key === '0') {
+    // M3.5: Handle buttons 1-9 and 0 (button 0 maps to index 9)
+    if (e.key === '0') {
+      this.holdingIndex = 9 // Button 0 maps to last item (black)
+    } else if (!isNaN(parseInt(e.key)) && parseInt(e.key) >= 1 && parseInt(e.key) <= 9) {
+      this.holdingIndex = parseInt(e.key) - 1 // Buttons 1-9 map to indices 0-8
+    } else {
       return
     }
-    this.holdingIndex = parseInt(e.key) - 1
 
-    this.holdingBlock = this.holdingBlocks[this.holdingIndex] ?? BlockType.grass
+    this.holdingBlock = this.holdingBlocks[this.holdingIndex] ?? BlockType.red
   }
 
   wheelHandler = (e: WheelEvent) => {
@@ -437,7 +475,7 @@ export default class Control {
         this.holdingIndex < 0 && (this.holdingIndex = 9)
       }
       this.holdingBlock =
-        this.holdingBlocks[this.holdingIndex] ?? BlockType.grass
+        this.holdingBlocks[this.holdingIndex] ?? BlockType.red
     }
   }
 

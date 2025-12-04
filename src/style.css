@@ -99,8 +99,13 @@ body {
   top: 100%;
   transform: translate(-50%, -100%);
   width: fit-content;
+  min-width: 660px; /* Ensure enough width for 10 items: (56px width + 2px margin + 4px border) * 10 = 660px */
+  padding: 3px; /* Add padding to prevent cutoff */
   background-color: hsla(0, 0%, 11%, 0.5);
-  height: 62px;
+  height: 66px; /* Increased height to accommodate padding */
+  box-sizing: border-box; /* Include padding in width calculation */
+  white-space: nowrap; /* Prevent items from wrapping */
+  overflow: visible; /* Ensure all items are visible */
 }
 
 .item {
@@ -109,6 +114,56 @@ body {
   height: 56px;
   margin: 1px;
   border: 2px solid rgb(141, 139, 139);
+  flex-shrink: 0; /* Prevent items from shrinking */
+  vertical-align: top; /* Align items to top */
+}
+
+.color-square {
+  width: 100%;
+  height: 100%;
+  border-radius: 2px;
+  position: relative;
+  border: 2px solid #333;
+}
+
+.color-square.color-white {
+  border: 2px solid #333;
+  box-shadow: inset 0 0 4px rgba(0,0,0,0.2);
+}
+
+.color-square.color-gray {
+  border: 2px solid #222;
+  box-shadow: inset 0 0 4px rgba(0,0,0,0.3);
+}
+
+.color-square.color-black {
+  border: 2px solid #666;
+  box-shadow: inset 0 0 4px rgba(255,255,255,0.1);
+}
+
+.color-label {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  font-size: 12px;
+  font-weight: bold;
+  font-family: Minecraft, Avenir, Helvetica, Arial, sans-serif;
+  pointer-events: none;
+}
+
+.color-label.label-light {
+  color: #000;
+  text-shadow: 1px 1px 1px rgba(255,255,255,0.8);
+}
+
+.color-label.label-dark {
+  color: #fff;
+  text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
+}
+
+.color-label.label-colored {
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
 }
 
 .selected {

@@ -18,14 +18,28 @@ export enum BlockType {
   diamond = 8,
   quartz = 9,
   glass = 10,
-  bedrock = 11
+  bedrock = 11,
+  // M3.1: New color-based block types (removed indigo, moved violet to slot 6, added brown to slot 7)
+  red = 12,
+  orange = 13,
+  yellow = 14,
+  green = 15,
+  blue = 16,
+  violet = 17,
+  brown = 18,
+  white = 19,
+  gray = 20,
+  black = 21
 }
 export default class Terrain {
   constructor(scene: THREE.Scene, camera: THREE.PerspectiveCamera) {
     this.scene = scene
     this.camera = camera
-    this.maxCount =
-      (this.distance * this.chunkSize * 2 + this.chunkSize) ** 2 + 500
+    // M3.3 Performance: Reduced maxCount since procedural generation is disabled
+    // Original: (distance * chunkSize * 2 + chunkSize) ** 2 + 500 = ~28,724
+    // New: MAX_USER_BLOCKS (10,000) + buffer for ground plane (10,000) = 20,000
+    // This significantly reduces memory allocation for InstancedMesh instances
+    this.maxCount = 20000
     this.highlight = new Highlight(scene, camera, this)
     this.scene.add(this.cloud)
 
@@ -79,13 +93,29 @@ export default class Terrain {
     MaterialType.diamond,
     MaterialType.quartz,
     MaterialType.glass,
-    MaterialType.bedrock
+    MaterialType.bedrock,
+    // M3.3: New color material types (removed indigo, moved violet to slot 6, added brown to slot 7)
+    MaterialType.red,
+    MaterialType.orange,
+    MaterialType.yellow,
+    MaterialType.green,
+    MaterialType.blue,
+    MaterialType.violet,
+    MaterialType.brown,
+    MaterialType.white,
+    MaterialType.gray,
+    MaterialType.black
   ]
 
   // other properties
   blocks: THREE.InstancedMesh[] = []
   blocksCount: number[] = []
-  blocksFactor = [1, 0.2, 0.1, 0.7, 0.1, 1.0, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1] // M2.4: Increased stone (index 5) factor to 1.0 to support 10,000 ground blocks
+  // Performance: Cached counter for user-placed blocks (excludes ground blocks)
+  // Incremented/decremented on place/remove instead of filtering array every time
+  userPlacedBlockCount = 0
+  // M3.3 Performance: Texture blocks (indices 0-11) set to 0 since they're not used
+  // Color types (indices 12-21) use 0.5 factor (10,000 max instances each)
+  blocksFactor = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5] // 12 texture blocks (unused) + 10 color types
 
   customBlocks: Block[] = []
   // Performance: Map for O(1) block lookups by position (key: `${x}_${y}_${z}`)
@@ -148,17 +178,15 @@ export default class Terrain {
   }
   
   // M2.4: Create 100x100 grey ground plane at Y=0 with yellow marker blocks
+  // M3.3: Updated to use gray and yellow color block types
   createGroundPlane = () => {
     const groundSize = 100
-    const groundColor = BlockType.stone // Use stone type temporarily (grey-ish), will be replaced with color system in M3.1
-    const markerColor = BlockType.diamond // Use diamond for yellow markers (bright/visible), will be replaced with yellow color in M3.1
+    const groundColor = BlockType.gray // M3.3: Use gray color block type
+    const markerColor = BlockType.yellow // M3.3: Use yellow color block type
     const matrix = new THREE.Matrix4()
     
-    // Performance: Create InstancedMesh for yellow markers instead of individual meshes
-    const yellowMaterial = new THREE.MeshStandardMaterial({ color: 0xffff00 }) // Bright yellow
-    const yellowGeometry = new THREE.BoxGeometry(1, 1, 1)
-    const yellowMarkerMesh = new THREE.InstancedMesh(yellowGeometry, yellowMaterial, 121) // 11x11 = 121 markers
-    let yellowMarkerIndex = 0
+    // M3.3: Yellow markers now use the yellow BlockType InstancedMesh (no separate mesh needed)
+    // We'll render yellow markers using the blocks[yellow] InstancedMesh
     
     // Generate 100x100 blocks at Y=0 (X: 0-99, Z: 0-99)
     for (let x = 0; x < groundSize; x++) {
@@ -167,40 +195,23 @@ export default class Terrain {
         const blockKey = `${x}_0_${z}` // Key for blocksMap lookup
         // Yellow markers at grid intersections: where both x and z are multiples of 10
         const isMarker = (x % 10 === 0) && (z % 10 === 0)
+        const blockColor = isMarker ? markerColor : groundColor
         
-        if (isMarker) {
-          // Create bright yellow marker block using InstancedMesh
-          matrix.setPosition(position)
-          yellowMarkerMesh.setMatrixAt(yellowMarkerIndex++, matrix)
-          
-          // Add to customBlocks with isGround flag
-          const block = new Block(x, 0, z, markerColor, true, true)
-          this.customBlocks.push(block)
-          this.blocksMap.set(blockKey, block) // Add to Map for O(1) lookup
-        } else {
-          // Create regular grey ground block
-          const block = new Block(x, 0, z, groundColor, true, true)
-          this.customBlocks.push(block)
-          this.blocksMap.set(blockKey, block) // Add to Map for O(1) lookup
-          
-          // Render block using InstancedMesh
-          matrix.setPosition(position)
-          this.blocks[groundColor].setMatrixAt(this.getCount(groundColor), matrix)
-          this.setCount(groundColor)
-        }
+        // Create block with isGround flag
+        const block = new Block(x, 0, z, blockColor, true, true)
+        this.customBlocks.push(block)
+        this.blocksMap.set(blockKey, block) // Add to Map for O(1) lookup
+        
+        // Render block using InstancedMesh
+        matrix.setPosition(position)
+        this.blocks[blockColor].setMatrixAt(this.getCount(blockColor), matrix)
+        this.setCount(blockColor)
       }
     }
     
-    // Add yellow marker InstancedMesh to scene and update
-    yellowMarkerMesh.instanceMatrix.needsUpdate = true
-    yellowMarkerMesh.count = yellowMarkerIndex // Set actual count
-    this.scene.add(yellowMarkerMesh)
-    
-    // Store yellow marker mesh so it can be included in raycaster checks
-    this.additionalRaycastMeshes.push(yellowMarkerMesh)
-    
-    // Update instance matrix for rendering
+    // M3.3: Update instance matrices for both gray and yellow blocks
     this.blocks[groundColor].instanceMatrix.needsUpdate = true
+    this.blocks[markerColor].instanceMatrix.needsUpdate = true
   }
 
   /**
@@ -301,6 +312,31 @@ export default class Terrain {
     this.blocks[type].setMatrixAt(this.getCount(type), matrix)
     this.blocks[type].instanceMatrix.needsUpdate = true
     this.setCount(type)
+  }
+
+  /**
+   * M3.7: Get count of user-placed blocks (excludes ground blocks)
+   * Performance: Uses cached counter instead of filtering array (O(1) instead of O(n))
+   * @returns Number of blocks where placed === true AND isGround !== true
+   */
+  getUserPlacedBlockCount = (): number => {
+    return this.userPlacedBlockCount
+  }
+
+  /**
+   * Increment user-placed block count (called when placing non-ground blocks)
+   */
+  incrementUserPlacedCount = () => {
+    this.userPlacedBlockCount++
+  }
+
+  /**
+   * Decrement user-placed block count (called when removing non-ground blocks)
+   */
+  decrementUserPlacedCount = () => {
+    if (this.userPlacedBlockCount > 0) {
+      this.userPlacedBlockCount--
+    }
   }
 
   update = () => {

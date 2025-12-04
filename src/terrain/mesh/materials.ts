@@ -29,7 +29,18 @@ export enum MaterialType {
   diamond = 'diamond',
   quartz = 'quartz',
   glass = 'glass',
-  bedrock = 'bedrock'
+  bedrock = 'bedrock',
+  // M3.2: New solid color material types (removed indigo, moved violet to slot 6, added brown to slot 7)
+  red = 'red',
+  orange = 'orange',
+  yellow = 'yellow',
+  green = 'green',
+  blue = 'blue',
+  violet = 'violet',
+  brown = 'brown',
+  white = 'white',
+  gray = 'gray',
+  black = 'black'
 }
 let loader = new THREE.TextureLoader()
 
@@ -110,7 +121,18 @@ export default class Materials {
       map: glassMaterial,
       transparent: true
     }),
-    bedrock: new THREE.MeshStandardMaterial({ map: bedrockMaterial })
+    bedrock: new THREE.MeshStandardMaterial({ map: bedrockMaterial }),
+    // M3.2: Solid color materials (no textures) - removed indigo
+    red: new THREE.MeshStandardMaterial({ color: 0xff0000 }),
+    orange: new THREE.MeshStandardMaterial({ color: 0xffa500 }),
+    yellow: new THREE.MeshStandardMaterial({ color: 0xffff00 }),
+    green: new THREE.MeshStandardMaterial({ color: 0x00ff00 }),
+    blue: new THREE.MeshStandardMaterial({ color: 0x0000ff }),
+    violet: new THREE.MeshStandardMaterial({ color: 0x8b00ff }),
+    brown: new THREE.MeshStandardMaterial({ color: 0x8b4513 }),
+    white: new THREE.MeshStandardMaterial({ color: 0xffffff }),
+    gray: new THREE.MeshStandardMaterial({ color: 0x808080 }),
+    black: new THREE.MeshStandardMaterial({ color: 0x000000 })
   }
 
   get = (
