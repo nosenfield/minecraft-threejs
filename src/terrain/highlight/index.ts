@@ -45,9 +45,13 @@ export default class BlockHighlight {
     // raycaster.far is already set in constructor to BLOCK_INTERACTION_RANGE
     this.raycaster.setFromCamera({ x: 0, y: 0 }, this.camera)
 
-    // Intersect with all block InstancedMeshes (terrain.blocks[])
+    // Intersect with all block InstancedMeshes (terrain.blocks[] + yellow marker mesh)
     // Three.js raycasters are optimized for InstancedMesh intersection with bounding box culling
-    const intersects = this.raycaster.intersectObjects(this.terrain.blocks)
+    const objectsToCheck = [...this.terrain.blocks]
+    if (this.terrain.yellowMarkerMesh) {
+      objectsToCheck.push(this.terrain.yellowMarkerMesh)
+    }
+    const intersects = this.raycaster.intersectObjects(objectsToCheck)
 
     if (intersects.length > 0) {
       const hit = intersects[0]

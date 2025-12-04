@@ -95,6 +95,9 @@ export default class Terrain {
   idMap = new Map<string, number>()
   generateWorker = new Generate()
 
+  // Yellow marker mesh for ground plane grid (must be included in raycaster checks)
+  yellowMarkerMesh: THREE.InstancedMesh | null = null
+
   // cloud
   cloud = new THREE.InstancedMesh(
     new THREE.BoxGeometry(20, 5, 14),
@@ -189,7 +192,11 @@ export default class Terrain {
     
     // Add yellow marker InstancedMesh to scene and update
     yellowMarkerMesh.instanceMatrix.needsUpdate = true
+    yellowMarkerMesh.count = yellowMarkerIndex // Set actual count
     this.scene.add(yellowMarkerMesh)
+    
+    // Store yellow marker mesh so it can be included in raycaster checks
+    this.yellowMarkerMesh = yellowMarkerMesh
     
     // Update instance matrix for rendering
     this.blocks[groundColor].instanceMatrix.needsUpdate = true
