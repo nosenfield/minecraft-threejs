@@ -7,6 +7,7 @@ import Block from '../terrain/mesh/block'
 import Noise from '../terrain/noise'
 import Audio from '../audio'
 import { isMobile } from '../utils'
+import { BLOCK_INTERACTION_RANGE } from '../constants'
 enum Side {
   front,
   back,
@@ -32,7 +33,7 @@ export default class Control {
     this.audio = audio
 
     this.raycaster = new THREE.Raycaster()
-    this.raycaster.far = 8
+    this.raycaster.far = BLOCK_INTERACTION_RANGE
     this.far = this.player.body.height
 
     this.initRayCaster()
@@ -410,7 +411,7 @@ export default class Control {
       this.mouseHolding = true
       this.clickInterval = setInterval(() => {
         this.mousedownHandler(e)
-      }, 333)
+      }, 250) // Decreased hold-to-place interval to 0.25s (250ms)
     }
 
     // console.log(performance.now() - p1)

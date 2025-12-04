@@ -1,8 +1,13 @@
 import * as THREE from 'three'
 import Terrain from '..'
+import { BLOCK_INTERACTION_RANGE } from '../../constants'
 
 /**
  * Highlight block on crosshair
+ * 
+ * Simplified approach: Raycast directly against rendered blocks (terrain.blocks[])
+ * instead of maintaining a separate instanceMesh. This ensures consistency with
+ * block placement/removal and eliminates range mismatches.
  */
 export default class BlockHighlight {
   constructor(
@@ -14,7 +19,7 @@ export default class BlockHighlight {
     this.scene = scene
     this.terrain = terrain
     this.raycaster = new THREE.Raycaster()
-    this.raycaster.far = 8
+    this.raycaster.far = BLOCK_INTERACTION_RANGE
   }
 
   scene: THREE.Scene
@@ -32,65 +37,34 @@ export default class BlockHighlight {
   })
   mesh = new THREE.Mesh(new THREE.BoxGeometry(), this.material)
 
-  // block simulation
-  index = 0
-  instanceMesh = new THREE.InstancedMesh(
-    new THREE.BoxGeometry(),
-    new THREE.MeshBasicMaterial(),
-    1000
-  )
-
   update() {
-    // remove last highlight and reset block simulation
+    // Remove last highlight
     this.scene.remove(this.mesh)
-    this.index = 0
-    this.instanceMesh.instanceMatrix = new THREE.InstancedBufferAttribute(
-      new Float32Array(1000 * 16),
-      16
-    )
 
-    const matrix = new THREE.Matrix4()
-    const position = this.camera.position
-    const raycasterRange = 8 // Only check blocks within raycaster range
-    
-    // Performance: Spatial partitioning - only check blocks near camera
-    // M2.1: Procedural terrain generation disabled in highlight system
-    // Only use actual blocks from customBlocks array within range
-    const minX = Math.floor(position.x - raycasterRange)
-    const maxX = Math.ceil(position.x + raycasterRange)
-    const minY = Math.floor(position.y - raycasterRange)
-    const maxY = Math.ceil(position.y + raycasterRange)
-    const minZ = Math.floor(position.z - raycasterRange)
-    const maxZ = Math.ceil(position.z + raycasterRange)
-    
-    // Only iterate blocks within range (spatial partitioning)
-    for (const block of this.terrain.customBlocks) {
-      if (
-        block.placed &&
-        block.x >= minX && block.x <= maxX &&
-        block.y >= minY && block.y <= maxY &&
-        block.z >= minZ && block.z <= maxZ
-      ) {
-        matrix.setPosition(block.x, block.y, block.z)
-        this.instanceMesh.setMatrixAt(this.index++, matrix)
-      }
-    }
-
-    // highlight new block
+    // Raycast directly against rendered blocks (already in scene)
+    // raycaster.far is already set in constructor to BLOCK_INTERACTION_RANGE
     this.raycaster.setFromCamera({ x: 0, y: 0 }, this.camera)
-    this.block = this.raycaster.intersectObject(this.instanceMesh)[0]
-    if (
-      this.block &&
-      this.block.object instanceof THREE.InstancedMesh &&
-      typeof this.block.instanceId === 'number'
-    ) {
-      this.mesh = new THREE.Mesh(this.geometry, this.material)
-      let matrix = new THREE.Matrix4()
-      this.block.object.getMatrixAt(this.block.instanceId, matrix)
-      const position = new THREE.Vector3().setFromMatrixPosition(matrix)
 
-      this.mesh.position.set(position.x, position.y, position.z)
-      this.scene.add(this.mesh)
+    // Intersect with all block InstancedMeshes (terrain.blocks[])
+    // Three.js raycasters are optimized for InstancedMesh intersection with bounding box culling
+    const intersects = this.raycaster.intersectObjects(this.terrain.blocks)
+
+    if (intersects.length > 0) {
+      const hit = intersects[0]
+      if (hit.object instanceof THREE.InstancedMesh && typeof hit.instanceId === 'number') {
+        const matrix = new THREE.Matrix4()
+        hit.object.getMatrixAt(hit.instanceId, matrix)
+        const position = new THREE.Vector3().setFromMatrixPosition(matrix)
+
+        this.mesh = new THREE.Mesh(this.geometry, this.material)
+        this.mesh.position.copy(position)
+        this.scene.add(this.mesh)
+        this.block = hit
+      } else {
+        this.block = null
+      }
+    } else {
+      this.block = null
     }
   }
 }

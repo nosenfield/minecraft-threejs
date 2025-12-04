@@ -143,11 +143,12 @@ export default class UI {
 
         terrain.initBlocks()
         terrain.generate()
-        terrain.scene.fog = new THREE.Fog(
-          0x87ceeb,
-          1,
-          terrain.distance * 24 + 24
-        )
+        // Fog removed - no longer setting fog in settings
+        // terrain.scene.fog = new THREE.Fog(
+        //   0x87ceeb,
+        //   1,
+        //   terrain.distance * 24 + 24
+        // )
       }
     })
 
