@@ -315,6 +315,50 @@ export default class Terrain {
   }
 
   /**
+   * Render all custom blocks to InstancedMesh instances
+   * Used when loading a saved game
+   */
+  renderCustomBlocks = () => {
+    const matrix = new THREE.Matrix4()
+    
+    // Reset blocksMap and counters (but keep blocksCount array structure)
+    this.blocksMap.clear()
+    this.userPlacedBlockCount = 0
+    // Reset block counts for all types
+    this.blocksCount = new Array(this.materialType.length).fill(0)
+    
+    // Render all custom blocks
+    for (const block of this.customBlocks) {
+      const blockKey = `${block.x}_${block.y}_${block.z}`
+      
+      // Add to blocksMap for O(1) lookups
+      this.blocksMap.set(blockKey, block)
+      
+      // Only render placed blocks (skip removed blocks where placed === false)
+      if (block.placed) {
+        const position = new THREE.Vector3(block.x, block.y, block.z)
+        matrix.setPosition(position)
+        
+        // Render to appropriate InstancedMesh
+        const blockType = block.type
+        const count = this.getCount(blockType)
+        this.blocks[blockType].setMatrixAt(count, matrix)
+        this.setCount(blockType)
+        
+        // Update user-placed block counter (exclude ground blocks)
+        if (block.isGround !== true) {
+          this.userPlacedBlockCount++
+        }
+      }
+    }
+    
+    // Update all instance matrices
+    for (const blockMesh of this.blocks) {
+      blockMesh.instanceMatrix.needsUpdate = true
+    }
+  }
+
+  /**
    * M3.7: Get count of user-placed blocks (excludes ground blocks)
    * Performance: Uses cached counter instead of filtering array (O(1) instead of O(n))
    * @returns Number of blocks where placed === true AND isGround !== true

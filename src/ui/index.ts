@@ -4,15 +4,26 @@ import Terrain from '../terrain'
 import Block from '../terrain/mesh/block'
 import Control from '../control'
 import { Mode } from '../player'
-import Joystick from './joystick'
+// M4.4: Joystick import removed - mobile controls not needed for MVP
+// import Joystick from './joystick'
 import { isMobile } from '../utils'
 import * as THREE from 'three'
 
 export default class UI {
   constructor(terrain: Terrain, control: Control) {
+    this.terrain = terrain
     this.fps = new FPS()
     this.bag = new Bag()
-    this.joystick = new Joystick(control)
+    // M4.4: Joystick removed - mobile controls not needed for MVP
+    // this.joystick = new Joystick(control)
+
+    // Create block counter element right after FPS element
+    this.blockCounter = document.createElement('div')
+    this.blockCounter.id = 'block-counter'
+    this.blockCounter.className = 'block-counter'
+    this.blockCounter.textContent = '0 / 10,000'
+    // Insert block counter right after FPS element
+    this.fps.fps.insertAdjacentElement('afterend', this.blockCounter)
 
     this.crossHair.className = 'cross-hair'
     this.crossHair.innerHTML = '+'
@@ -32,35 +43,18 @@ export default class UI {
         terrain.customBlocks = []
         terrain.initBlocks()
         terrain.generate()
-        terrain.camera.position.y = 40
+        // Reset camera to initial position (40, 5, 40) looking at (50, 0, 50)
+        terrain.camera.position.set(40, 5, 40)
+        terrain.camera.lookAt(50, 0, 50)
         control.player.setMode(Mode.walking)
       }
       !isMobile && control.control.lock()
     })
 
-    // save load
+    // Load Game button handler
     this.save?.addEventListener('click', () => {
-      if (this.save?.innerHTML === 'Save and Exit') {
-        // save game
-        window.localStorage.setItem(
-          'block',
-          JSON.stringify(terrain.customBlocks)
-        )
-        window.localStorage.setItem('seed', JSON.stringify(terrain.noise.seed))
-
-        window.localStorage.setItem(
-          'position',
-          JSON.stringify({
-            x: terrain.camera.position.x,
-            y: terrain.camera.position.y,
-            z: terrain.camera.position.z
-          })
-        )
-
-        // ui update
-        this.onExit()
-        this.onSave()
-      } else {
+      // Load Game button clicked - only load if button is enabled
+      if (this.save && !this.save.disabled && this.save.innerHTML === 'Load Game') {
         // load game
         terrain.noise.seed =
           Number(window.localStorage.getItem('seed')) ?? Math.random()
@@ -70,20 +64,53 @@ export default class UI {
             window.localStorage.getItem('block') || 'null'
           ) as Block[]) ?? []
 
-        terrain.customBlocks = customBlocks
+        // Initialize blocks (creates InstancedMesh instances)
+        // Note: This will create a new ground plane, but we'll replace customBlocks with loaded data
         terrain.initBlocks()
-        terrain.generate()
+        
+        // Load custom blocks (this includes the ground plane if it was saved)
+        terrain.customBlocks = customBlocks
+        
+        // Rebuild blocksMap and render all loaded blocks to InstancedMesh instances
+        terrain.renderCustomBlocks()
 
-        const position =
+        // Load camera state (position and quaternion for view restoration)
+        const cameraData =
+          (JSON.parse(window.localStorage.getItem('camera') || 'null') as {
+            position: { x: number; y: number; z: number }
+            quaternion: { x: number; y: number; z: number; w: number }
+          }) ?? null
+
+        // Fallback to legacy 'position' for backward compatibility
+        const legacyPosition =
           (JSON.parse(window.localStorage.getItem('position') || 'null') as {
             x: number
             y: number
             z: number
           }) ?? null
 
-        position && (terrain.camera.position.x = position.x)
-        position && (terrain.camera.position.y = position.y)
-        position && (terrain.camera.position.z = position.z)
+        if (cameraData) {
+          // Restore position and quaternion (complete view restoration)
+          terrain.camera.position.set(
+            cameraData.position.x,
+            cameraData.position.y,
+            cameraData.position.z
+          )
+          terrain.camera.quaternion.set(
+            cameraData.quaternion.x,
+            cameraData.quaternion.y,
+            cameraData.quaternion.z,
+            cameraData.quaternion.w
+          )
+        } else if (legacyPosition) {
+          // Legacy save - only restore position, use default lookAt
+          terrain.camera.position.set(
+            legacyPosition.x,
+            legacyPosition.y,
+            legacyPosition.z
+          )
+          terrain.camera.lookAt(50, 0, 50) // Default lookAt for legacy saves
+        }
 
         // ui update
         this.onPlay()
@@ -92,12 +119,21 @@ export default class UI {
       }
     })
 
-    // guide
-    this.feature?.addEventListener('click', () => {
-      this.features?.classList.remove('hidden')
+    // Initialize Load Game button state on startup
+    this.updateLoadGameButtonState()
+
+    // M4.5: Export button handler (placeholder - actual export in Phase 4)
+    this.export?.addEventListener('click', () => {
+      console.log('Export button clicked - export functionality will be implemented in Phase 4')
+      // TODO: Implement export functionality in Phase 4 (M5.2 + Phase 4 tasks)
+    })
+
+    // controls
+    this.controls?.addEventListener('click', () => {
+      this.controlsModal?.classList.remove('hidden')
     })
     this.back?.addEventListener('click', () => {
-      this.features?.classList.add('hidden')
+      this.controlsModal?.classList.add('hidden')
     })
 
     // setting
@@ -191,11 +227,18 @@ export default class UI {
       e.preventDefault()
       !isMobile && control.control.lock()
     })
+
+    // Auto-save on page unload
+    window.addEventListener('beforeunload', () => {
+      this.saveToLocalStorage()
+    })
   }
 
+  terrain: Terrain
   fps: FPS
   bag: Bag
-  joystick: Joystick
+  // M4.4: Joystick removed - mobile controls not needed for MVP
+  // joystick: Joystick
 
   menu = document.querySelector('.menu')
   crossHair = document.createElement('div')
@@ -204,17 +247,26 @@ export default class UI {
   play = document.querySelector('#play')
   control = document.querySelector('#control')
   setting = document.querySelector('#setting')
-  feature = document.querySelector('#feature')
+  controls = document.querySelector('#controls')
   back = document.querySelector('#back')
   exit = document.querySelector('#exit')
+  export = document.querySelector('#export')
+  // M4.4: Save/load button preserved for production (hidden in MVP)
   save = document.querySelector('#save')
 
   // modals
+  // M4.4: Save/load modals preserved for production (hidden in MVP)
   saveModal = document.querySelector('.save-modal')
   loadModal = document.querySelector('.load-modal')
   settings = document.querySelector('.settings')
-  features = document.querySelector('.features')
+  controlsModal = document.querySelector('.controls')
   github = document.querySelector('.github')
+  
+  // M4.2: Block counter element (created dynamically after FPS)
+  blockCounter: HTMLDivElement
+
+  // Auto-save timer
+  autoSaveTimer: ReturnType<typeof setInterval> | null = null
 
   // settings
   distance = document.querySelector('#distance')
@@ -229,41 +281,50 @@ export default class UI {
   settingBack = document.querySelector('#setting-back')
 
   onPlay = () => {
-    isMobile && this.joystick.init()
+    // M4.4: Joystick initialization removed
+    // isMobile && this.joystick.init()
     this.menu?.classList.add('hidden')
     this.menu?.classList.remove('start')
     this.play && (this.play.innerHTML = 'Resume')
     this.crossHair.classList.remove('hidden')
     this.github && this.github.classList.add('hidden')
-    this.feature?.classList.add('hidden')
+    // Controls button now visible in escape menu (not hidden during gameplay)
+    // Show escape-menu-only buttons (Settings, Export) when entering game
+    this.setting?.classList.remove('hidden')
+    this.export?.classList.remove('hidden')
+    // Start auto-save timer (10 second interval)
+    this.startAutoSave()
   }
 
   onPause = () => {
     this.menu?.classList.remove('hidden')
     this.crossHair.classList.add('hidden')
-    this.save && (this.save.innerHTML = 'Save and Exit')
+    // Hide Load Game button in escape menu (only visible in start menu)
+    this.save?.classList.add('hidden')
     this.github && this.github.classList.remove('hidden')
+    // Controls button visible in escape menu
+    this.controls?.classList.remove('hidden')
+    // Show escape-menu-only buttons (Settings, Export) in escape menu
+    this.setting?.classList.remove('hidden')
+    this.export?.classList.remove('hidden')
   }
 
   onExit = () => {
+    // Stop auto-save timer
+    this.stopAutoSave()
+    // Auto-save on exit
+    this.saveToLocalStorage()
     this.menu?.classList.add('start')
     this.play && (this.play.innerHTML = 'Play')
+    // Show Load Game button in start menu
     this.save && (this.save.innerHTML = 'Load Game')
-    this.feature?.classList.remove('hidden')
-  }
-
-  onSave = () => {
-    this.saveModal?.classList.remove('hidden')
-    setTimeout(() => {
-      this.saveModal?.classList.add('show')
-    })
-    setTimeout(() => {
-      this.saveModal?.classList.remove('show')
-    }, 1000)
-
-    setTimeout(() => {
-      this.saveModal?.classList.add('hidden')
-    }, 1350)
+    this.save?.classList.remove('hidden')
+    this.controls?.classList.remove('hidden')
+    // Hide escape-menu-only buttons (Settings, Export) in start menu
+    this.setting?.classList.add('hidden')
+    this.export?.classList.add('hidden')
+    // Update Load Game button state (enable/disable based on saved data)
+    this.updateLoadGameButtonState()
   }
 
   onLoad = () => {
@@ -280,7 +341,107 @@ export default class UI {
     }, 1350)
   }
 
+  // M4.2: Update block counter display
+  updateBlockCounter = () => {
+    if (!this.blockCounter) return
+    
+    const count = this.terrain.getUserPlacedBlockCount()
+    const maxCount = 10000
+    this.blockCounter.textContent = `${count.toLocaleString()} / ${maxCount.toLocaleString()}`
+    
+    // Add warning class when approaching limit (> 8000)
+    if (count > 8000) {
+      this.blockCounter.classList.add('warning')
+    } else {
+      this.blockCounter.classList.remove('warning')
+    }
+  }
+
+  // Check if saved game data exists in localStorage
+  hasSavedGame = (): boolean => {
+    const savedBlocks = window.localStorage.getItem('block')
+    return savedBlocks !== null && savedBlocks !== 'null' && savedBlocks !== ''
+  }
+
+  // Update Load Game button state (enable/disable based on saved data)
+  updateLoadGameButtonState = () => {
+    if (!this.save) return
+    
+    // Only update state when button shows "Load Game" (start menu)
+    if (this.save.innerHTML === 'Load Game') {
+      const hasSaved = this.hasSavedGame()
+      this.save.disabled = !hasSaved
+    }
+  }
+
+  // Auto-save functionality
+  saveToLocalStorage = () => {
+    try {
+      window.localStorage.setItem(
+        'block',
+        JSON.stringify(this.terrain.customBlocks)
+      )
+      window.localStorage.setItem('seed', JSON.stringify(this.terrain.noise.seed))
+
+      // Save camera position and rotation (quaternion) for complete view restoration
+      window.localStorage.setItem(
+        'camera',
+        JSON.stringify({
+          position: {
+            x: this.terrain.camera.position.x,
+            y: this.terrain.camera.position.y,
+            z: this.terrain.camera.position.z
+          },
+          quaternion: {
+            x: this.terrain.camera.quaternion.x,
+            y: this.terrain.camera.quaternion.y,
+            z: this.terrain.camera.quaternion.z,
+            w: this.terrain.camera.quaternion.w
+          }
+        })
+      )
+      // Keep 'position' for backward compatibility (legacy saves)
+      window.localStorage.setItem(
+        'position',
+        JSON.stringify({
+          x: this.terrain.camera.position.x,
+          y: this.terrain.camera.position.y,
+          z: this.terrain.camera.position.z
+        })
+      )
+      // Update Load Game button state after saving
+      this.updateLoadGameButtonState()
+    } catch (e) {
+      console.error('Auto-save failed:', e)
+      // Handle quota exceeded or other errors gracefully
+      if (e instanceof DOMException && e.name === 'QuotaExceededError') {
+        console.warn('localStorage quota exceeded - auto-save disabled')
+        this.stopAutoSave()
+      }
+    }
+  }
+
+  // Start auto-save timer (10 second interval)
+  startAutoSave = () => {
+    // Clear any existing timer
+    this.stopAutoSave()
+    // Start new timer
+    this.autoSaveTimer = setInterval(() => {
+      this.saveToLocalStorage()
+    }, 10000) // 10 seconds
+  }
+
+  // Stop auto-save timer
+  stopAutoSave = () => {
+    if (this.autoSaveTimer) {
+      clearInterval(this.autoSaveTimer)
+      this.autoSaveTimer = null
+    }
+  }
+
   update = () => {
     this.fps.update()
+    // M4.2: Update block counter every frame
+    this.updateBlockCounter()
   }
 }

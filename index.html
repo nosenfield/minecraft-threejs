@@ -36,24 +36,28 @@
     </a>
     <div class="menu start">
       <button id="play" class="button">Play</button>
+      <button id="controls" class="button">Controls</button>
+      <!-- Load Game button visible in start menu, hidden in escape menu -->
       <button id="save" class="button">Load Game</button>
-      <button id="setting" class="button">Setting</button>
-      <button id="feature" class="button">Guide</button>
+      <!-- Settings and Export buttons only visible in escape menu, not start menu -->
+      <button id="setting" class="button escape-menu-only">Setting</button>
+      <button id="export" class="button escape-menu-only">Export Level</button>
       <button id="exit" class="button">Exit</button>
       <footer class="footer">© 2022 Yulei Zhu</footer>
     </div>
 
-    <div class="features hidden">
+    <div class="controls hidden">
       <p>
-        <b> Left-Click: </b> destroy block <br />
-        <b> Right-Click:</b> place block <br />
+        <b> Left-Click: </b> place block <br />
+        <b> Right-Click:</b> remove block <br />
         <b> Wheel / Number Key: </b>change block <br />
         <b> WASD: </b>move <br />
-        <b> Space: </b>jump / fly up<br />
-        <b> Q:</b> toggle normal / dev mode <br />
-        <b> Shift:</b> sneaking / fly down <br />
+        <b> Q: </b>move down <br />
+        <b> E: </b>move up <br />
+        <b> Space: </b>fast mode <br />
+        <b> Mouse: </b>look around <br />
+        <b> ESC: </b>release cursor <br />
         <b> F: </b>full screen <br />
-        <b> E: </b>menu <br />
       </p>
       <button id="back" class="button">Back</button>
     </div>
@@ -87,6 +91,7 @@
       <button id="setting-back" class="button">Apply</button>
     </div>
 
+    <!-- M4.4: Save/load modals hidden for MVP, preserved for production -->
     <div class="save-modal hidden">Game Saved!</div>
     <div class="load-modal hidden">Game Loaded!</div>
   </body>
