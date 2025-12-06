@@ -1,9 +1,9 @@
 /**
- * M5.2: Space JSON Serialization
- * 
+ * Space JSON Serialization
+ *
  * Converts Block objects to Space JSON format for export to backend.
  * Space JSON is the intermediate format between frontend and Rust backend.
- * 
+ *
  * Coordinate Transformation:
  * - Three.js coordinates (1x1x1 blocks) are scaled by 2x to Roblox studs (2x2x2)
  * - Coordinates are rounded to integers before serialization

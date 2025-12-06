@@ -4,7 +4,7 @@ import Terrain from '../terrain'
 import Block from '../terrain/mesh/block'
 import Control from '../control'
 import { Mode } from '../player'
-// M4.4: Joystick import removed - mobile controls not needed for MVP
+// Joystick import removed - mobile controls not needed for MVP
 // import Joystick from './joystick'
 import { isMobile, blockTypeToHex } from '../utils'
 import * as THREE from 'three'
@@ -15,7 +15,7 @@ export default class UI {
     this.terrain = terrain
     this.fps = new FPS()
     this.bag = new Bag()
-    // M4.4: Joystick removed - mobile controls not needed for MVP
+    // Joystick removed - mobile controls not needed for MVP
     // this.joystick = new Joystick(control)
 
     // Create block counter element right after FPS element
@@ -69,7 +69,7 @@ export default class UI {
         // Note: This will create a new ground plane, but we'll replace customBlocks with loaded data
         terrain.initBlocks()
         
-        // M5.1: Backward compatibility - ensure all loaded blocks have color property
+        // Backward compatibility - ensure all loaded blocks have color property
         // If color is missing (old saves), derive it from BlockType
         for (const block of customBlocks) {
           if (!block.color && block.type !== undefined) {
@@ -135,12 +135,12 @@ export default class UI {
     // Initialize Load Game button state on startup
     this.updateLoadGameButtonState()
 
-    // Phase 4: Export button handler
+    // Export button handler
     this.export?.addEventListener('click', async () => {
       await this.handleExport()
     })
 
-    // Phase 4: Error message close button
+    // Error message close button
     this.errorClose?.addEventListener('click', () => {
       this.hideErrorMessage()
     })
@@ -254,7 +254,7 @@ export default class UI {
   terrain: Terrain
   fps: FPS
   bag: Bag
-  // M4.4: Joystick removed - mobile controls not needed for MVP
+  // Joystick removed - mobile controls not needed for MVP
   // joystick: Joystick
 
   menu = document.querySelector('.menu')
@@ -268,23 +268,23 @@ export default class UI {
   back = document.querySelector('#back')
   exit = document.querySelector('#exit')
   export = document.querySelector('#export')
-  // M4.4: Save/load button preserved for production (hidden in MVP)
+  // Save/load button preserved for production (hidden in MVP)
   save = document.querySelector('#save')
 
   // modals
-  // M4.4: Save/load modals preserved for production (hidden in MVP)
+  // Save/load modals preserved for production (hidden in MVP)
   saveModal = document.querySelector('.save-modal')
   loadModal = document.querySelector('.load-modal')
   settings = document.querySelector('.settings')
   controlsModal = document.querySelector('.controls')
   
-  // Phase 4: Export UI components
+  // Export UI components
   loadingOverlay = document.querySelector('.loading-overlay')
   errorMessage = document.querySelector('.error-message')
   errorText = document.querySelector('.error-text')
   errorClose = document.querySelector('#error-close')
   
-  // M4.2: Block counter element (created dynamically after FPS)
+  // Block counter element (created dynamically after FPS)
   blockCounter: HTMLDivElement
 
   // Auto-save timer
@@ -303,7 +303,7 @@ export default class UI {
   settingBack = document.querySelector('#setting-back')
 
   onPlay = () => {
-    // M4.4: Joystick initialization removed
+    // Joystick initialization removed
     // isMobile && this.joystick.init()
     this.menu?.classList.add('hidden')
     this.menu?.classList.remove('start')
@@ -361,7 +361,7 @@ export default class UI {
     }, 1350)
   }
 
-  // M4.2: Update block counter display
+  // Update block counter display
   updateBlockCounter = () => {
     if (!this.blockCounter) return
     
@@ -461,11 +461,11 @@ export default class UI {
 
   update = () => {
     this.fps.update()
-    // M4.2: Update block counter every frame
+    // Update block counter every frame
     this.updateBlockCounter()
   }
 
-  // Phase 4: Loading overlay methods
+  // Loading overlay methods
   showLoadingOverlay = () => {
     this.loadingOverlay?.classList.remove('hidden')
   }
@@ -474,7 +474,7 @@ export default class UI {
     this.loadingOverlay?.classList.add('hidden')
   }
 
-  // Phase 4: Error message methods
+  // Error message methods
   showErrorMessage = (message: string) => {
     if (this.errorText) {
       this.errorText.textContent = message
@@ -489,7 +489,7 @@ export default class UI {
     }
   }
 
-  // Phase 4: Export handler
+  // Export handler
   handleExport = async () => {
     try {
       // Show loading overlay

@@ -20,7 +20,7 @@ export enum BlockType {
   quartz = 9,
   glass = 10,
   bedrock = 11,
-  // M3.1: New color-based block types (removed indigo, moved violet to slot 6, added brown to slot 7)
+  // Color-based block types
   red = 12,
   orange = 13,
   yellow = 14,
@@ -36,10 +36,8 @@ export default class Terrain {
   constructor(scene: THREE.Scene, camera: THREE.PerspectiveCamera) {
     this.scene = scene
     this.camera = camera
-    // M3.3 Performance: Reduced maxCount since procedural generation is disabled
-    // Original: (distance * chunkSize * 2 + chunkSize) ** 2 + 500 = ~28,724
-    // New: MAX_USER_BLOCKS (10,000) + buffer for ground plane (10,000) = 20,000
-    // This significantly reduces memory allocation for InstancedMesh instances
+    // maxCount set for user blocks + ground plane buffer
+    // MAX_USER_BLOCKS (10,000) + ground plane buffer (10,000) = 20,000
     this.maxCount = 20000
     this.highlight = new Highlight(scene, camera, this)
     this.scene.add(this.cloud)
@@ -95,7 +93,7 @@ export default class Terrain {
     MaterialType.quartz,
     MaterialType.glass,
     MaterialType.bedrock,
-    // M3.3: New color material types (removed indigo, moved violet to slot 6, added brown to slot 7)
+    // Color material types
     MaterialType.red,
     MaterialType.orange,
     MaterialType.yellow,
@@ -114,7 +112,7 @@ export default class Terrain {
   // Performance: Cached counter for user-placed blocks (excludes ground blocks)
   // Incremented/decremented on place/remove instead of filtering array every time
   userPlacedBlockCount = 0
-  // M3.3 Performance: Texture blocks (indices 0-11) set to 0 since they're not used
+  // Texture blocks (indices 0-11) set to 0 since they're not used
   // Color types (indices 12-21) use 0.5 factor (10,000 max instances each)
   blocksFactor = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5] // 12 texture blocks (unused) + 10 color types
 
@@ -174,22 +172,20 @@ export default class Terrain {
 
     this.blocksCount = new Array(this.materialType.length).fill(0)
     
-    // M2.4: Create ground plane after initializing blocks
+    // Create ground plane after initializing blocks
     this.createGroundPlane()
   }
   
-  // M2.4: Create 100x100 grey ground plane at Y=0 with yellow marker blocks
-  // M3.3: Updated to use gray and yellow color block types
+  // Create 100x100 grey ground plane at Y=0 with yellow marker blocks
   // Ground plane centered at (0, 0, 0) - spans X: -50 to 49, Z: -50 to 49
   createGroundPlane = () => {
     const groundSize = 100
-    const groundColor = BlockType.gray // M3.3: Use gray color block type
-    const markerColor = BlockType.yellow // M3.3: Use yellow color block type
+    const groundColor = BlockType.gray
+    const markerColor = BlockType.yellow
     const matrix = new THREE.Matrix4()
     const offset = -groundSize / 2 // -50 to center the plane
     
-    // M3.3: Yellow markers now use the yellow BlockType InstancedMesh (no separate mesh needed)
-    // We'll render yellow markers using the blocks[yellow] InstancedMesh
+    // Yellow markers use the yellow BlockType InstancedMesh
     
     // Generate 100x100 blocks at Y=-0.5, centered at (0, 0, 0) (X: -50 to 49, Z: -50 to 49)
     // Top surface of ground plane is at Y=0
@@ -216,7 +212,7 @@ export default class Terrain {
       }
     }
     
-    // M3.3: Update instance matrices for both gray and yellow blocks
+    // Update instance matrices for both gray and yellow blocks
     this.blocks[groundColor].instanceMatrix.needsUpdate = true
     this.blocks[markerColor].instanceMatrix.needsUpdate = true
   }
@@ -240,9 +236,7 @@ export default class Terrain {
   }
 
   generate = () => {
-    // M2.1: Procedural terrain generation disabled
-    // M2.2: Cloud generation disabled
-    // This method is now a no-op to prevent errors from UI calls
+    // Procedural terrain generation disabled (no-op to prevent errors from UI calls)
     return
   }
 
@@ -366,8 +360,8 @@ export default class Terrain {
   }
 
   /**
-   * M3.7: Get count of user-placed blocks (excludes ground blocks)
-   * Performance: Uses cached counter instead of filtering array (O(1) instead of O(n))
+   * Get count of user-placed blocks (excludes ground blocks)
+   * Uses cached counter instead of filtering array (O(1) instead of O(n))
    * @returns Number of blocks where placed === true AND isGround !== true
    */
   getUserPlacedBlockCount = (): number => {
@@ -391,14 +385,13 @@ export default class Terrain {
   }
 
   update = () => {
-    // M2.1: Chunk-based terrain generation disabled
-    // Chunk tracking kept for potential future use but generation skipped
+    // Chunk tracking kept for potential future use
     this.chunk.set(
       Math.floor(this.camera.position.x / this.chunkSize),
       Math.floor(this.camera.position.z / this.chunkSize)
     )
 
-    // Terrain generation on chunk change disabled (M2.1)
+    // Terrain generation on chunk change disabled
     // if (
     //   this.chunk.x !== this.previousChunk.x ||
     //   this.chunk.y !== this.previousChunk.y

@@ -8,7 +8,7 @@ export const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(
   navigator.userAgent
 )
 
-// M5.1: Utility function to convert BlockType enum to hex color string
+// Utility function to convert BlockType enum to hex color string
 import { BlockType } from '../terrain/index'
 import {
   COLOR_RED,

@@ -93,9 +93,9 @@ export default class Control {
   raycaster: THREE.Raycaster
   far: number
 
-  holdingBlock = BlockType.red // M3.5: Default to red (button 1)
+  holdingBlock = BlockType.red // Default to red (button 1)
   holdingBlocks = [
-    // M3.5: Map buttons 1-0 to colors (removed indigo, moved violet to 6, added brown to 7)
+    // Map buttons 1-0 to color block types
     BlockType.red,    // Button 1
     BlockType.orange, // Button 2
     BlockType.yellow, // Button 3
@@ -272,7 +272,7 @@ export default class Control {
               return
             }
 
-            // M3.6: Calculate placement position and check coordinate bounds
+            // Calculate placement position and check coordinate bounds
             const placeX = normal.x + position.x
             const placeY = normal.y + position.y
             const placeZ = normal.z + position.z
@@ -287,7 +287,7 @@ export default class Control {
               return
             }
 
-            // M3.7: Check block limit (exclude ground blocks)
+            // Check block limit (exclude ground blocks)
             if (this.terrain.getUserPlacedBlockCount() >= MAX_USER_BLOCKS) {
               // Block limit reached - silently fail
               return
@@ -335,7 +335,7 @@ export default class Control {
             block.object.getMatrixAt(block.instanceId!, matrix)
             const position = new THREE.Vector3().setFromMatrixPosition(matrix)
 
-            // M2.5: Prevent removal of ground blocks
+            // Prevent removal of ground blocks
             // Performance: Use Map for O(1) lookup instead of linear search
             const blockKey = `${position.x}_${position.y}_${position.z}`
             const blockData = this.terrain.blocksMap.get(blockKey)
@@ -429,7 +429,7 @@ export default class Control {
               // Note: removedBlock.placed is false, so we don't increment counter here
             }
 
-            // M2.1: generateAdjacentBlocks removed - no longer needed without procedural terrain
+            // generateAdjacentBlocks removed - no longer needed without procedural terrain
           }
         }
         break
@@ -452,7 +452,7 @@ export default class Control {
   }
 
   changeHoldingBlockHandler = (e: KeyboardEvent) => {
-    // M3.5: Handle buttons 1-9 and 0 (button 0 maps to index 9)
+    // Handle buttons 1-9 and 0 (button 0 maps to index 9)
     if (e.key === '0') {
       this.holdingIndex = 9 // Button 0 maps to last item (black)
     } else if (!isNaN(parseInt(e.key)) && parseInt(e.key) >= 1 && parseInt(e.key) <= 9) {
@@ -728,7 +728,6 @@ export default class Control {
     }
     
     // Legacy collision code removed - always in flying mode
-    // All collision checking and physics removed (M1.2)
     
     // Safety net: prevent falling too far below ground
     if (this.camera.position.y < -100) {

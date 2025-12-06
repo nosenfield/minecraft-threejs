@@ -30,7 +30,7 @@ export enum MaterialType {
   quartz = 'quartz',
   glass = 'glass',
   bedrock = 'bedrock',
-  // M3.2: New solid color material types (removed indigo, moved violet to slot 6, added brown to slot 7)
+  // Solid color material types
   red = 'red',
   orange = 'orange',
   yellow = 'yellow',
@@ -122,7 +122,7 @@ export default class Materials {
       transparent: true
     }),
     bedrock: new THREE.MeshStandardMaterial({ map: bedrockMaterial }),
-    // M3.2: Solid color materials (no textures) - removed indigo
+    // Solid color materials (no textures)
     red: new THREE.MeshStandardMaterial({ color: 0xff0000 }),
     orange: new THREE.MeshStandardMaterial({ color: 0xffa500 }),
     yellow: new THREE.MeshStandardMaterial({ color: 0xffff00 }),

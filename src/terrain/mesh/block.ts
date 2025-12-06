@@ -1,8 +1,7 @@
 import { BlockType } from '../index'
 
 /**
- * Custom block
- * M5.1: Enhanced with color, tags, and tagConfig for export and future game mechanics
+ * Custom block with color, tags, and configuration for export and game mechanics
  */
 export default class Block {
   object: any
@@ -32,10 +31,10 @@ export default class Block {
   z: number
   type: BlockType
   placed: boolean
-  color: string // M5.1: Hex color format (e.g., "#FF0000")
+  color: string // Hex color format (e.g., "#FF0000")
   isGround: boolean
-  tags?: string[] // M5.1: Optional tags for game mechanics (e.g., ["healPlayer", "destructable"])
-  tagConfig?: Record<string, any> // M5.1: Optional tag-specific configurations
+  tags?: string[] // Optional tags for game mechanics (e.g., ["healPlayer", "destructable"])
+  tagConfig?: Record<string, any> // Optional tag-specific configurations
 
   /**
    * Check if block has a specific tag

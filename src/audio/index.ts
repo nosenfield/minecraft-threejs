@@ -35,7 +35,7 @@ import { isMobile } from '../utils'
 
 export default class Audio {
   constructor(camera: THREE.PerspectiveCamera) {
-    // M2.3: Audio disabled - early return to skip initialization
+    // Audio disabled - early return to skip initialization
     return
   }
 
@@ -60,7 +60,7 @@ export default class Audio {
   index = 0
 
   playSound(type: BlockType) {
-    // M2.3: Audio disabled - no-op method
+    // Audio disabled - no-op
     return
   }
 }

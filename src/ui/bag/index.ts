@@ -32,7 +32,7 @@ export default class Bag {
     document.body.appendChild(this.bag)
 
     document.body.addEventListener('keydown', (e: KeyboardEvent) => {
-      // M3.4: Handle buttons 1-9 and 0 (button 0 maps to index 9)
+      // Handle buttons 1-9 and 0 (button 0 maps to index 9)
       let selectedIndex: number | null = null
       if (e.key === '0') {
         selectedIndex = 9 // Button 0 maps to last item (black)
@@ -80,15 +80,15 @@ export default class Bag {
 
   bag = document.createElement('div')
 
-  // M3.4: Color mapping for buttons 1-0 (removed indigo, moved violet to 6, added brown to 7)
+  // Color mapping for buttons 1-0
   colorPalette = [
     COLOR_RED,    // Button 1
     COLOR_ORANGE, // Button 2
     COLOR_YELLOW, // Button 3
     COLOR_GREEN,  // Button 4
     COLOR_BLUE,   // Button 5
-    COLOR_VIOLET, // Button 6 (moved from 7)
-    COLOR_BROWN,  // Button 7 (new)
+    COLOR_VIOLET, // Button 6
+    COLOR_BROWN,  // Button 7
     COLOR_WHITE,  // Button 8
     COLOR_GRAY,   // Button 9
     COLOR_BLACK   // Button 0
@@ -98,7 +98,7 @@ export default class Bag {
     let item = document.createElement('div')
     item.className = 'item'
 
-    // M3.4: Use color squares for buttons 1-0 (indices 0-9)
+    // Use color squares for buttons 1-0 (indices 0-9)
     if (index < this.colorPalette.length) {
       let colorSquare = document.createElement('div')
       colorSquare.className = 'color-square'
