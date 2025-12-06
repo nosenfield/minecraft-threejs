@@ -1,0 +1,22 @@
+{
+  "m": "terrain",
+  "p": "Block system using Three.js InstancedMesh",
+  "f": {
+    "index.ts": "Terrain class: BlockType enum (12 texture + 10 color), ground plane, raycasting",
+    "mesh/block.ts": "Block class: position, type, color, isGround, tags",
+    "mesh/materials.ts": "MaterialType enum, MeshStandardMaterial per BlockType",
+    "highlight/index.ts": "BlockHighlight: raycasts from camera, renders translucent highlight",
+    "noise/index.ts": "Perlin noise for procedural terrain (disabled)",
+    "worker/generate.ts": "Web Worker for chunk generation (disabled)"
+  },
+  "x": [
+    "BlockType: Enum 0-21 (texture 0-11, colors 12-21)",
+    "Terrain: Main class with blocks[], blocksMap, userPlacedBlockCount",
+    "Block: Position, type, placed, color, isGround, tags"
+  ],
+  "r": [
+    "../control/index.ts: Block placement logic",
+    "../export/serialize.ts: Block serialization",
+    "../constants.ts: Coordinate bounds and colors"
+  ]
+}

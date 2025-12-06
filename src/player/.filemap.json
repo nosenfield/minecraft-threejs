@@ -1,0 +1,13 @@
+{
+  "m": "player",
+  "p": "Player state and movement configuration",
+  "f": {
+    "index.ts": "Player class: mode (walking/flying), speed values, isRunning state"
+  },
+  "x": [
+    "Player: Mode enum, walkSpeed, runSpeed, flySpeed, isRunning"
+  ],
+  "r": [
+    "../control/index.ts: Speed value consumer"
+  ]
+}

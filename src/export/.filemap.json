@@ -1,0 +1,16 @@
+{
+  "m": "export",
+  "p": "Space JSON serialization for backend API",
+  "f": {
+    "index.ts": "Re-exports serializeToSpaceJSON",
+    "serialize.ts": "serializeToSpaceJSON(): converts blocks to Space JSON with 2x coordinate scaling"
+  },
+  "x": [
+    "serializeToSpaceJSON(blocks, version, name): Returns Space JSON string"
+  ],
+  "r": [
+    "../terrain/index.ts: Block data source",
+    "../terrain/mesh/block.ts: Block class",
+    "../../backend/src/models.rs: SpaceJSON schema"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "m": "control",
+  "p": "Input handling, camera movement, block interaction",
+  "f": {
+    "index.ts": "Control class: WASD/QE flying, click placement/removal, color selection",
+    "worker/downCollide.ts": "Vertical collision detection (legacy, disabled)",
+    "worker/sideCollide.ts": "Horizontal collision detection (legacy, disabled)"
+  },
+  "r": [
+    "../terrain/index.ts: Block management",
+    "../player/index.ts: Movement speeds",
+    "../constants.ts: Coordinate bounds"
+  ]
+}

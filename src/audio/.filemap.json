@@ -1,0 +1,11 @@
+{
+  "m": "audio",
+  "p": "Sound effects for block interactions (disabled)",
+  "f": {
+    "index.ts": "Audio class: sound loading and playback"
+  },
+  "d": {
+    "blocks/": "Block sound effect files (.ogg)",
+    "musics/": "Background music files (.ogg)"
+  }
+}

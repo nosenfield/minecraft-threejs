@@ -1,0 +1,14 @@
+{
+  "m": "core",
+  "p": "Three.js scene, camera, and renderer setup",
+  "f": {
+    "index.ts": "Core class: Scene, PerspectiveCamera (FOV 50), WebGLRenderer, sky color"
+  },
+  "x": [
+    "Core: Main class with scene, camera, renderer properties"
+  ],
+  "r": [
+    "../main.ts: Instantiation",
+    "../control/index.ts: Camera access for movement"
+  ]
+}

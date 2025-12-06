@@ -1,0 +1,16 @@
+{
+  "m": "ui",
+  "p": "User interface: menus, HUD, export handling",
+  "f": {
+    "index.ts": "UI class: menu system, export, auto-save (10s), load game",
+    "bag/index.ts": "Bag class: 10 color squares (keys 1-9, 0), selection highlight",
+    "fps/index.ts": "FPS class: calculates and displays frames per second",
+    "joystick/index.ts": "Mobile touch controls (disabled)",
+    "joystick/joystick.html": "HTML template for touch controls (disabled)"
+  },
+  "r": [
+    "../export/serialize.ts: Space JSON serialization",
+    "../terrain/index.ts: Block data access",
+    "../control/index.ts: Input state"
+  ]
+}

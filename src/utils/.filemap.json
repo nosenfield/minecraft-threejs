@@ -1,0 +1,16 @@
+{
+  "m": "utils",
+  "p": "Shared utility functions",
+  "f": {
+    "index.ts": "htmlToDom(), isMobile constant, blockTypeToHex()"
+  },
+  "x": [
+    "htmlToDom(html): Converts HTML string to DOM, appends to body",
+    "isMobile: Boolean for mobile device detection",
+    "blockTypeToHex(type): BlockType enum to hex color string"
+  ],
+  "r": [
+    "../terrain/index.ts: BlockType enum",
+    "../constants.ts: Color definitions"
+  ]
+}
