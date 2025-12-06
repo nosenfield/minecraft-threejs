@@ -44,9 +44,9 @@ export default class UI {
         terrain.customBlocks = []
         terrain.initBlocks()
         terrain.generate()
-        // Reset camera to initial position (40, 5, 40) looking at (50, 0, 50)
-        terrain.camera.position.set(40, 5, 40)
-        terrain.camera.lookAt(50, 0, 50)
+        // Reset camera to initial position (40, 5, 40) looking at (0, 0, 0)
+        terrain.camera.position.set(10, 5, 10)
+        terrain.camera.lookAt(0, 0, 0)
         control.player.setMode(Mode.walking)
       }
       !isMobile && control.control.lock()
@@ -122,7 +122,7 @@ export default class UI {
             legacyPosition.y,
             legacyPosition.z
           )
-          terrain.camera.lookAt(50, 0, 50) // Default lookAt for legacy saves
+          terrain.camera.lookAt(0, 0, 0) // Default lookAt for legacy saves (ground plane centered at origin)
         }
 
         // ui update

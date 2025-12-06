@@ -5,13 +5,24 @@
 // Block interaction constants
 export const BLOCK_INTERACTION_RANGE = 50 // Maximum distance for block placement/removal/highlight
 
-// Block coordinate bounds
+// Block coordinate bounds (Three.js units)
+// Note: These are the bounds for Three.js coordinates before scaling.
+// When exporting, coordinates are scaled by 2x to Roblox studs.
+// Scaled bounds: X/Z: -1000 to 1000, Y: 0 to 1000
 export const BLOCK_X_MIN = -500
 export const BLOCK_X_MAX = 500
 export const BLOCK_Z_MIN = -500
 export const BLOCK_Z_MAX = 500
 export const BLOCK_Y_MIN = 0
 export const BLOCK_Y_MAX = 500
+
+// Scaled coordinate bounds (Roblox studs) - used for export validation
+export const SCALED_BLOCK_X_MIN = -1000
+export const SCALED_BLOCK_X_MAX = 1000
+export const SCALED_BLOCK_Z_MIN = -1000
+export const SCALED_BLOCK_Z_MAX = 1000
+export const SCALED_BLOCK_Y_MIN = 0
+export const SCALED_BLOCK_Y_MAX = 1000
 
 // Block limit
 export const MAX_USER_BLOCKS = 10000 // Maximum user-placed blocks (ground excluded)

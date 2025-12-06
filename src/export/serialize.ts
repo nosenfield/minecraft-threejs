@@ -3,9 +3,22 @@
  * 
  * Converts Block objects to Space JSON format for export to backend.
  * Space JSON is the intermediate format between frontend and Rust backend.
+ * 
+ * Coordinate Transformation:
+ * - Three.js coordinates (1x1x1 blocks) are scaled by 2x to Roblox studs (2x2x2)
+ * - Coordinates are rounded to integers before serialization
+ * - Y offset (+1) is applied in backend to center 2x2x2 Part correctly
  */
 
 import Block from '../terrain/mesh/block'
+import {
+  SCALED_BLOCK_X_MIN,
+  SCALED_BLOCK_X_MAX,
+  SCALED_BLOCK_Z_MIN,
+  SCALED_BLOCK_Z_MAX,
+  SCALED_BLOCK_Y_MIN,
+  SCALED_BLOCK_Y_MAX,
+} from '../constants'
 
 /**
  * Space JSON block format (schemaVersion 1)
@@ -57,12 +70,32 @@ export function serializeToSpaceJSON(
   )
 
   // Map blocks to Space JSON format based on schema version
+  // Scale coordinates from Three.js units (1x1x1) to Roblox studs (2x2x2)
   const serializedBlocks: (SpaceJSONBlockV1 | SpaceJSONBlockV2)[] =
     userPlacedBlocks.map((block) => {
+      // Scale and round coordinates: Three.js units * 2 = Roblox studs
+      const scaledX = Math.round(block.x * 2)
+      const scaledY = Math.round(block.y * 2)
+      const scaledZ = Math.round(block.z * 2)
+
+      // Validate scaled coordinates (backend will also validate, but catch early)
+      if (
+        scaledX < SCALED_BLOCK_X_MIN || scaledX > SCALED_BLOCK_X_MAX ||
+        scaledZ < SCALED_BLOCK_Z_MIN || scaledZ > SCALED_BLOCK_Z_MAX ||
+        scaledY < SCALED_BLOCK_Y_MIN || scaledY > SCALED_BLOCK_Y_MAX
+      ) {
+        // Skip blocks outside scaled bounds (shouldn't happen if frontend validation works)
+        // Log warning but don't throw - let backend handle validation errors
+        console.warn(
+          `Block at (${block.x}, ${block.y}, ${block.z}) scales to (${scaledX}, ${scaledY}, ${scaledZ}) which is out of bounds. Skipping.`
+        )
+        return null
+      }
+
       const baseBlock: SpaceJSONBlockV1 = {
-        x: block.x,
-        y: block.y,
-        z: block.z,
+        x: scaledX,
+        y: scaledY,
+        z: scaledZ,
         color: block.color,
       }
 
@@ -80,6 +113,7 @@ export function serializeToSpaceJSON(
 
       return baseBlock
     })
+    .filter((block): block is SpaceJSONBlockV1 | SpaceJSONBlockV2 => block !== null) // Remove null entries from out-of-bounds blocks
 
   const spaceJSON: SpaceJSON = {
     schemaVersion,

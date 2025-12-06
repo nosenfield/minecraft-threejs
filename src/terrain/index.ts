@@ -180,26 +180,32 @@ export default class Terrain {
   
   // M2.4: Create 100x100 grey ground plane at Y=0 with yellow marker blocks
   // M3.3: Updated to use gray and yellow color block types
+  // Ground plane centered at (0, 0, 0) - spans X: -50 to 49, Z: -50 to 49
   createGroundPlane = () => {
     const groundSize = 100
     const groundColor = BlockType.gray // M3.3: Use gray color block type
     const markerColor = BlockType.yellow // M3.3: Use yellow color block type
     const matrix = new THREE.Matrix4()
+    const offset = -groundSize / 2 // -50 to center the plane
     
     // M3.3: Yellow markers now use the yellow BlockType InstancedMesh (no separate mesh needed)
     // We'll render yellow markers using the blocks[yellow] InstancedMesh
     
-    // Generate 100x100 blocks at Y=0 (X: 0-99, Z: 0-99)
+    // Generate 100x100 blocks at Y=-0.5, centered at (0, 0, 0) (X: -50 to 49, Z: -50 to 49)
+    // Top surface of ground plane is at Y=0
+    const groundY = -0.5
     for (let x = 0; x < groundSize; x++) {
       for (let z = 0; z < groundSize; z++) {
-        const position = new THREE.Vector3(x, 0, z)
-        const blockKey = `${x}_0_${z}` // Key for blocksMap lookup
+        const worldX = x + offset // -50 to 49
+        const worldZ = z + offset // -50 to 49
+        const position = new THREE.Vector3(worldX, groundY, worldZ)
+        const blockKey = `${worldX}_${groundY}_${worldZ}` // Key for blocksMap lookup
         // Yellow markers at grid intersections: where both x and z are multiples of 10
         const isMarker = (x % 10 === 0) && (z % 10 === 0)
         const blockColor = isMarker ? markerColor : groundColor
         
-        // Create block with isGround flag
-        const block = new Block(x, 0, z, blockColor, true, blockTypeToHex(blockColor), true)
+        // Create block with isGround flag (top surface at Y=0)
+        const block = new Block(worldX, groundY, worldZ, blockColor, true, blockTypeToHex(blockColor), true)
         this.customBlocks.push(block)
         this.blocksMap.set(blockKey, block) // Add to Map for O(1) lookup
         
