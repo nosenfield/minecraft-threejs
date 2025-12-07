@@ -5,7 +5,11 @@
     "main.ts": "Entry point: initializes Core, Player, Terrain, Control, UI, Audio",
     "constants.ts": "Shared constants: bounds, colors, block limits (10,000 max)",
     "style.css": "Global styles for UI elements",
-    "vite-env.d.ts": "Vite TypeScript declarations"
+    "vite-env.d.ts": "Vite TypeScript declarations",
+    "firebase/config.ts": "Firebase initialization (Auth, Firestore, offline persistence)",
+    "firebase/auth.ts": "Firebase Auth service (anonymous auth, state management)",
+    "firebase/types.ts": "Level type definitions (Block, CameraState, Level, LevelSummary, etc.)",
+    "firebase/levels.ts": "Firestore level CRUD service (create, read, update, delete, list)"
   },
   "d": {
     "audio/": "Sound effects (disabled)",
