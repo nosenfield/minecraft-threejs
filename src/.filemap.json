@@ -12,6 +12,7 @@
     "control/": "Input handling, block placement/removal",
     "core/": "Three.js scene, camera, renderer",
     "export/": "Space JSON serialization",
+    "firebase/": "Firebase integration (Auth, Firestore, offline persistence)",
     "player/": "Player state and movement",
     "terrain/": "Block system with InstancedMesh",
     "ui/": "HUD, menus, export button",
