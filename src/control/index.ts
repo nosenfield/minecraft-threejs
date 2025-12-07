@@ -7,6 +7,7 @@ import Block from '../terrain/mesh/block'
 import Noise from '../terrain/noise'
 import Audio from '../audio'
 import { isMobile, blockTypeToHex } from '../utils'
+import { EditMode } from './editMode'
 import { 
   BLOCK_INTERACTION_RANGE,
   BLOCK_X_MIN,
@@ -114,6 +115,11 @@ export default class Control {
   mouseHolding = false
   spaceHolding = false
   isFastMode = false
+
+  // Edit mode properties
+  editMode: EditMode = EditMode.Single
+  dragStart: THREE.Vector3 | null = null
+  isDragging = false
 
   initRayCaster = () => {
     this.raycasterUp.ray.direction = new THREE.Vector3(0, 1, 0)
@@ -734,5 +740,12 @@ export default class Control {
       this.camera.position.y = 60
     }
     this.p2 = this.p1
+  }
+
+  setEditMode(mode: EditMode) {
+    this.editMode = mode
+    // Reset drag state when changing modes
+    this.dragStart = null
+    this.isDragging = false
   }
 }

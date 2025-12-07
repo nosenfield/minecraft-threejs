@@ -5,6 +5,7 @@ import Terrain from './terrain'
 import UI from './ui'
 import Audio from './audio'
 import { initAuth } from './firebase/auth'
+import ToolsHotbar from './ui/tools'
 
 import './style.css'
 
@@ -31,7 +32,12 @@ async function init() {
   const terrain = new Terrain(scene, camera)
   const control = new Control(scene, camera, player, terrain, audio)
 
-  const ui = new UI(terrain, control, renderer)
+  // Create tools hotbar and wire to control
+  const toolsHotbar = new ToolsHotbar((mode) => {
+    control.setEditMode(mode)
+  })
+
+  const ui = new UI(terrain, control, renderer, toolsHotbar)
 
   // Initialize level selection after auth is ready
   await ui.initLevelSelection()

@@ -1,0 +1,32 @@
+{
+  "m": "firebase",
+  "p": "Firebase integration: Auth (anonymous), Firestore (level persistence), offline support",
+  "f": {
+    "config.ts": "Firebase initialization (Auth, Firestore, offline persistence)",
+    "auth.ts": "Firebase Auth service (anonymous auth, state management)",
+    "types.ts": "Level type definitions (Block, CameraState, Level, LevelSummary, etc.)",
+    "levels.ts": "Firestore level CRUD service (create, read, update, delete, list)"
+  },
+  "x": [
+    "auth: Firebase Auth instance",
+    "db: Firestore database instance",
+    "initAuth: Initialize anonymous authentication",
+    "getCurrentUser: Get current authenticated user",
+    "getUserId: Get current user ID (throws if not authenticated)",
+    "isAuthInitialized: Check if auth has been initialized",
+    "Block: Block interface for Firestore storage",
+    "CameraState: Camera state for view restoration",
+    "Level: Client-side level with ID and Date timestamps",
+    "LevelSummary: Level summary for list display",
+    "listLevels: List all levels for current user",
+    "getLevel: Get single level by ID with ownership verification",
+    "createLevel: Create new level with 5-level limit enforcement",
+    "updateLevel: Update level with ownership verification",
+    "deleteLevel: Delete level with ownership verification",
+    "getMaxLevels: Get maximum levels allowed per user"
+  ],
+  "r": [
+    "../main.ts: Imports initAuth for app startup",
+    "../ui/index.ts: Imports level CRUD functions and types for level management"
+  ]
+}

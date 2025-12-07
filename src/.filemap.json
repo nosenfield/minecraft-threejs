@@ -6,20 +6,19 @@
     "constants.ts": "Shared constants: bounds, colors, block limits (10,000 max)",
     "style.css": "Global styles for UI elements",
     "vite-env.d.ts": "Vite TypeScript declarations",
-    "firebase/config.ts": "Firebase initialization (Auth, Firestore, offline persistence)",
-    "firebase/auth.ts": "Firebase Auth service (anonymous auth, state management)",
-    "firebase/types.ts": "Level type definitions (Block, CameraState, Level, LevelSummary, etc.)",
-    "firebase/levels.ts": "Firestore level CRUD service (create, read, update, delete, list)"
+    "control/editMode.ts": "EditMode enum (Single, Line, Floor, Wall) with labels and keyboard shortcuts",
+    "utils/thumbnail.ts": "Thumbnail capture utility (WebGL canvas to base64 PNG)",
+    "ui/tools/index.ts": "ToolsHotbar component for editing mode selection (Cmd+1-4 shortcuts)"
   },
   "d": {
     "audio/": "Sound effects (disabled)",
-    "control/": "Input handling, block placement/removal",
+    "control/": "Input handling, block placement/removal, edit mode state",
     "core/": "Three.js scene, camera, renderer",
     "export/": "Space JSON serialization",
     "firebase/": "Firebase integration (Auth, Firestore, offline persistence)",
     "player/": "Player state and movement",
     "terrain/": "Block system with InstancedMesh",
-    "ui/": "HUD, menus, export button",
-    "utils/": "DOM helpers, mobile detection"
+    "ui/": "HUD, menus, export button, level selection, tools hotbar",
+    "utils/": "DOM helpers, mobile detection, thumbnail capture"
   }
 }

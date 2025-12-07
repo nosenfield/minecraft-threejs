@@ -638,3 +638,53 @@ body {
 .error-toast.hidden {
   display: none;
 }
+
+/* Tools Hotbar */
+.tools-hotbar {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 2;
+}
+
+.tools-hotbar.hidden {
+  display: none;
+}
+
+.tools-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 12px;
+  color: white;
+  cursor: pointer;
+  background-color: #545655;
+  border: 2px solid #3a3a3a;
+  user-select: none;
+  min-width: 50px;
+  font-family: Minecraft, Avenir, Helvetica, Arial, sans-serif;
+}
+
+.tools-item:hover {
+  background-color: #6a6b6a;
+}
+
+.tools-item.selected {
+  background-color: #5a8f3a;
+  border-color: #7ab95a;
+}
+
+.tool-label {
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.tool-shortcut {
+  font-size: 10px;
+  opacity: 0.7;
+  margin-top: 2px;
+}

@@ -1,5 +1,6 @@
 import FPS from './fps'
 import Bag from './bag'
+import ToolsHotbar from './tools'
 import Terrain from '../terrain'
 import Block from '../terrain/mesh/block'
 import Control from '../control'
@@ -44,10 +45,11 @@ function hexToBlockType(hex: string): BlockType {
 }
 
 export default class UI {
-  constructor(terrain: Terrain, control: Control, renderer: THREE.WebGLRenderer) {
+  constructor(terrain: Terrain, control: Control, renderer: THREE.WebGLRenderer, toolsHotbar: ToolsHotbar) {
     this.terrain = terrain
     this.control = control
     this.renderer = renderer
+    this.toolsHotbar = toolsHotbar
     this.fps = new FPS()
     this.bag = new Bag()
     // Joystick removed - mobile controls not needed for MVP
@@ -500,6 +502,7 @@ export default class UI {
   terrain: Terrain
   control: Control
   renderer: THREE.WebGLRenderer
+  toolsHotbar: ToolsHotbar
   fps: FPS
   bag: Bag
   // Joystick removed - mobile controls not needed for MVP
@@ -580,6 +583,8 @@ export default class UI {
     this.newLevelCard?.classList.add('hidden')
     this.levelsRow?.classList.add('hidden')
     this.levelsLoading?.classList.add('hidden')
+    // Show tools hotbar
+    this.toolsHotbar.show()
     // Start auto-save timer (10 second interval)
     this.startAutoSave()
   }
@@ -596,6 +601,8 @@ export default class UI {
     this.newLevelCard?.classList.add('hidden')
     this.levelsRow?.classList.add('hidden')
     this.levelsLoading?.classList.add('hidden')
+    // Hide tools hotbar
+    this.toolsHotbar.hide()
   }
 
   onExit = async () => {
@@ -615,6 +622,8 @@ export default class UI {
     this.newLevelCard?.classList.remove('hidden')
     this.levelsRow?.classList.remove('hidden')
     this.controls?.classList.remove('hidden')
+    // Hide tools hotbar
+    this.toolsHotbar.hide()
 
     this.currentLevelId = null
     await this.refreshLevelsList()
