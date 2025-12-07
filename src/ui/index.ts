@@ -244,6 +244,7 @@ export default class UI {
       // E key removed - now used for upward movement in controls
       // Menu can be accessed via Escape key or clicking outside pointer lock
 
+
       // fullscreen
       if (e.key === 'f') {
         if (document.fullscreenElement) {
@@ -252,6 +253,12 @@ export default class UI {
           document.body.requestFullscreen()
         }
       }
+    })
+
+    // resume
+    this.resume?.addEventListener('click', () => {
+      // Resume game by locking pointer
+      !isMobile && this.control.control.lock()
     })
 
     // exit
@@ -561,6 +568,7 @@ export default class UI {
   back = document.querySelector('#back')
   exit = document.querySelector('#exit')
   export = document.querySelector('#export')
+  resume = document.querySelector('#resume')
   // Save/load button preserved for production (hidden in MVP)
   save = document.querySelector('#save')
 
@@ -617,10 +625,11 @@ export default class UI {
     this.menu?.classList.add('hidden')
     this.menu?.classList.remove('start')
     this.crossHair.classList.remove('hidden')
-    // Show escape-menu-only buttons (Settings, Export) when entering game
-    this.setting?.classList.remove('hidden')
-    this.export?.classList.remove('hidden')
-    this.exit?.classList.remove('hidden')
+    // Hide escape-menu-only buttons when playing (they'll show on pause)
+    this.setting?.classList.add('hidden')
+    this.export?.classList.add('hidden')
+    this.exit?.classList.add('hidden')
+    this.resume?.classList.add('hidden')
     // Hide level selection
     this.newLevelCard?.classList.add('hidden')
     this.levelsRow?.classList.add('hidden')
@@ -639,6 +648,7 @@ export default class UI {
     this.export?.classList.remove('hidden')
     this.exit?.classList.remove('hidden')
     this.controls?.classList.remove('hidden')
+    this.resume?.classList.remove('hidden')
     // Hide level selection
     this.newLevelCard?.classList.add('hidden')
     this.levelsRow?.classList.add('hidden')
@@ -659,6 +669,7 @@ export default class UI {
     this.setting?.classList.add('hidden')
     this.export?.classList.add('hidden')
     this.exit?.classList.add('hidden')
+    this.resume?.classList.add('hidden')
 
     // Show level selection
     this.newLevelCard?.classList.remove('hidden')

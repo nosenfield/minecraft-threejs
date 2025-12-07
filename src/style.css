@@ -82,6 +82,13 @@ body {
   display: none;
 }
 
+/* Hide level selection in in-game menu (only show on main menu with .start class) */
+.menu:not(.start) #new-level,
+.menu:not(.start) #levels-row,
+.menu:not(.start) #levels-loading {
+  display: none !important;
+}
+
 .menu {
   z-index: 1;
   position: fixed;
