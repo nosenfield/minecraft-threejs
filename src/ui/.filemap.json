@@ -1,8 +1,8 @@
 {
   "m": "ui",
-  "p": "User interface: menus, HUD, export handling",
+  "p": "User interface: menus, HUD, export handling, level selection",
   "f": {
-    "index.ts": "UI class: menu system, export, auto-save (10s), load game",
+    "index.ts": "UI class: menu system, level selection (Firebase), export, auto-save (10s), level CRUD",
     "bag/index.ts": "Bag class: 10 color squares (keys 1-9, 0), selection highlight",
     "fps/index.ts": "FPS class: calculates and displays frames per second",
     "joystick/index.ts": "Mobile touch controls (disabled)",
@@ -11,6 +11,8 @@
   "r": [
     "../export/serialize.ts: Space JSON serialization",
     "../terrain/index.ts: Block data access",
-    "../control/index.ts: Input state"
+    "../control/index.ts: Input state",
+    "../firebase/levels.ts: Level CRUD operations",
+    "../firebase/types.ts: Level type definitions"
   ]
 }

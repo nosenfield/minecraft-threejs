@@ -468,3 +468,173 @@ body {
   -webkit-user-select: none;
   user-select: none;
 }
+
+/* Phase 4: Level Selection UI */
+.title {
+  color: white;
+  font-size: 2rem;
+  margin-bottom: 20px;
+  font-family: Minecraft, Avenir, Helvetica, Arial, sans-serif;
+}
+
+.level-card {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px;
+  margin: 8px;
+  cursor: pointer;
+  background-color: #727272;
+  border-left: 2px solid #a4a4a4;
+  border-top: 2px solid #a4a4a4;
+  border-bottom: 2px solid #545655;
+  border-right: 2px solid #545655;
+  box-shadow: 0 0 0 2px black;
+  transition: transform 0.1s;
+}
+
+.level-card:hover {
+  transform: scale(1.05);
+  background-color: #5a8f3a;
+}
+
+.level-card:active {
+  transform: scale(0.98);
+}
+
+.new-level-card {
+  background-color: #4a7a2a;
+}
+
+.level-thumbnail {
+  width: 120px;
+  height: 90px;
+  background-color: #3a3a3a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+  overflow: hidden;
+}
+
+.level-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.default-thumbnail {
+  font-size: 48px;
+  color: #888;
+}
+
+.level-name {
+  margin-top: 8px;
+  color: white;
+  font-size: 14px;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.levels-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 700px;
+  margin: 16px auto;
+}
+
+.levels-loading {
+  color: #888;
+  font-size: 14px;
+  margin: 16px 0;
+}
+
+/* Level Name Modal */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  background-color: #727272;
+  padding: 24px;
+  border-left: 2px solid #a4a4a4;
+  border-top: 2px solid #a4a4a4;
+  border-bottom: 2px solid #545655;
+  border-right: 2px solid #545655;
+  box-shadow: 0 0 0 2px black;
+  text-align: center;
+}
+
+.modal-content h2 {
+  color: white;
+  margin-bottom: 16px;
+  font-size: 18px;
+  font-family: Minecraft, Avenir, Helvetica, Arial, sans-serif;
+}
+
+.level-name-input {
+  width: 250px;
+  padding: 8px 12px;
+  font-size: 16px;
+  margin-bottom: 16px;
+  background-color: #3a3a3a;
+  border: 2px solid #545655;
+  color: white;
+  outline: none;
+  font-family: Minecraft, Avenir, Helvetica, Arial, sans-serif;
+}
+
+.level-name-input:focus {
+  border-color: #5a8f3a;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.button.primary {
+  background-color: #5a8f3a;
+}
+
+.button.primary:hover {
+  background-color: #6aa84a;
+}
+
+/* Error Toast */
+.error-toast {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #c0392b;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 4px;
+  z-index: 200;
+  font-size: 14px;
+  font-family: Minecraft, Avenir, Helvetica, Arial, sans-serif;
+  box-shadow: 0 0 0 2px black;
+}
+
+.error-toast.hidden {
+  display: none;
+}

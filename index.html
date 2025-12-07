@@ -16,14 +16,27 @@
   <body>
     <script type="module" src="./src/main.ts"></script>
     <div class="menu start">
-      <button id="play" class="button">Play</button>
+      <h1 class="title">Block Builder</h1>
+
+      <!-- New Level Card -->
+      <div id="new-level" class="level-card new-level-card">
+        <div class="level-thumbnail default-thumbnail">+</div>
+        <span class="level-name">New Level</span>
+      </div>
+
+      <!-- Saved Levels Row -->
+      <div id="levels-row" class="levels-row">
+        <!-- Populated dynamically -->
+      </div>
+
+      <!-- Loading indicator -->
+      <div id="levels-loading" class="levels-loading hidden">Loading levels...</div>
+
+      <!-- Keep existing buttons but hide initially -->
       <button id="controls" class="button">Controls</button>
-      <!-- Load Game button visible in start menu, hidden in escape menu -->
-      <button id="save" class="button">Load Game</button>
-      <!-- Settings and Export buttons only visible in escape menu, not start menu -->
-      <button id="setting" class="button escape-menu-only">Setting</button>
-      <button id="export" class="button escape-menu-only">Export Level</button>
-      <button id="exit" class="button">Exit</button>
+      <button id="setting" class="button escape-menu-only hidden">Setting</button>
+      <button id="export" class="button escape-menu-only hidden">Export Level</button>
+      <button id="exit" class="button hidden">Exit</button>
     </div>
 
     <div class="controls hidden">
@@ -85,5 +98,20 @@
         <button id="error-close" class="button">Close</button>
       </div>
     </div>
+
+    <!-- Level Name Modal -->
+    <div id="level-name-modal" class="modal hidden">
+      <div class="modal-content">
+        <h2>Name Your Level</h2>
+        <input type="text" id="level-name-input" class="level-name-input" placeholder="Untitled Level 1" maxlength="100">
+        <div class="modal-buttons">
+          <button id="level-name-cancel" class="button">Cancel</button>
+          <button id="level-name-confirm" class="button primary">Create</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Toast -->
+    <div id="error-toast" class="error-toast hidden"></div>
   </body>
 </html>

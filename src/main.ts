@@ -33,6 +33,9 @@ async function init() {
 
   const ui = new UI(terrain, control)
 
+  // Initialize level selection after auth is ready
+  await ui.initLevelSelection()
+
   // animation
   ;(function animate() {
     // let p1 = performance.now()

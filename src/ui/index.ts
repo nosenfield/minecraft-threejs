@@ -9,10 +9,43 @@ import { Mode } from '../player'
 import { isMobile, blockTypeToHex } from '../utils'
 import * as THREE from 'three'
 import { serializeToSpaceJSON } from '../export'
+import { listLevels, createLevel, getLevel, updateLevel, getMaxLevels } from '../firebase/levels'
+import type { LevelSummary, CameraState } from '../firebase/types'
+import { BlockType } from '../terrain'
+import {
+  COLOR_RED,
+  COLOR_ORANGE,
+  COLOR_YELLOW,
+  COLOR_GREEN,
+  COLOR_BLUE,
+  COLOR_VIOLET,
+  COLOR_BROWN,
+  COLOR_WHITE,
+  COLOR_GRAY,
+  COLOR_BLACK,
+} from '../constants'
+
+// Helper function to map hex color to BlockType
+function hexToBlockType(hex: string): BlockType {
+  const colorMap: Record<string, BlockType> = {
+    [COLOR_RED]: BlockType.red,
+    [COLOR_ORANGE]: BlockType.orange,
+    [COLOR_YELLOW]: BlockType.yellow,
+    [COLOR_GREEN]: BlockType.green,
+    [COLOR_BLUE]: BlockType.blue,
+    [COLOR_VIOLET]: BlockType.violet,
+    [COLOR_BROWN]: BlockType.brown,
+    [COLOR_WHITE]: BlockType.white,
+    [COLOR_GRAY]: BlockType.gray,
+    [COLOR_BLACK]: BlockType.black,
+  }
+  return colorMap[hex] ?? BlockType.gray // Default fallback
+}
 
 export default class UI {
   constructor(terrain: Terrain, control: Control) {
     this.terrain = terrain
+    this.control = control
     this.fps = new FPS()
     this.bag = new Bag()
     // Joystick removed - mobile controls not needed for MVP
@@ -251,7 +284,219 @@ export default class UI {
     })
   }
 
+  // Level selection initialization (call after auth init)
+  async initLevelSelection() {
+    // Load saved levels
+    await this.refreshLevelsList()
+
+    // New Level click
+    this.newLevelCard?.addEventListener('click', () => {
+      this.showLevelNameModal()
+    })
+
+    // Modal handlers
+    this.levelNameCancel?.addEventListener('click', () => {
+      this.hideLevelNameModal()
+    })
+
+    this.levelNameConfirm?.addEventListener('click', () => {
+      this.handleCreateLevel()
+    })
+
+    this.levelNameInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        this.handleCreateLevel()
+      } else if (e.key === 'Escape') {
+        this.hideLevelNameModal()
+      }
+    })
+  }
+
+  async refreshLevelsList() {
+    this.isLoadingLevels = true
+    this.levelsLoading?.classList.remove('hidden')
+
+    try {
+      this.levels = await listLevels()
+      this.renderLevelsRow()
+      this.updateNextLevelNumber()
+    } catch (error) {
+      console.error('Failed to load levels:', error)
+      this.showError('Failed to load levels')
+    } finally {
+      this.isLoadingLevels = false
+      this.levelsLoading?.classList.add('hidden')
+    }
+  }
+
+  renderLevelsRow() {
+    if (!this.levelsRow) return
+    this.levelsRow.innerHTML = ''
+
+    for (const level of this.levels) {
+      const card = document.createElement('div')
+      card.className = 'level-card'
+      
+      // Create thumbnail container
+      const thumbnail = document.createElement('div')
+      thumbnail.className = 'level-thumbnail'
+      
+      if (level.thumbnail) {
+        const img = document.createElement('img')
+        img.src = level.thumbnail
+        img.alt = level.name // Safe: img.alt automatically escapes
+        thumbnail.appendChild(img)
+      } else {
+        const span = document.createElement('span')
+        span.textContent = level.name.charAt(0).toUpperCase() // Safe: textContent escapes
+        thumbnail.appendChild(span)
+      }
+      
+      // Create level name element
+      const nameSpan = document.createElement('span')
+      nameSpan.className = 'level-name'
+      nameSpan.textContent = level.name // Safe: textContent escapes HTML
+      
+      card.appendChild(thumbnail)
+      card.appendChild(nameSpan)
+      card.addEventListener('click', () => this.handleLoadLevel(level.id))
+      this.levelsRow.appendChild(card)
+    }
+  }
+
+  updateNextLevelNumber() {
+    // Find highest "Untitled Level N" number
+    let maxNum = 0
+    for (const level of this.levels) {
+      const match = level.name.match(/^Untitled Level (\d+)$/)
+      if (match) {
+        maxNum = Math.max(maxNum, parseInt(match[1]))
+      }
+    }
+    this.nextLevelNumber = maxNum + 1
+  }
+
+  showLevelNameModal() {
+    if (this.levels.length >= getMaxLevels()) {
+      this.showError(`Maximum ${getMaxLevels()} levels allowed. Delete a level to create a new one.`)
+      return
+    }
+
+    if (this.levelNameInput) {
+      this.levelNameInput.value = `Untitled Level ${this.nextLevelNumber}`
+      this.levelNameInput.select()
+    }
+    this.levelNameModal?.classList.remove('hidden')
+    this.levelNameInput?.focus()
+  }
+
+  hideLevelNameModal() {
+    this.levelNameModal?.classList.add('hidden')
+  }
+
+  async handleCreateLevel() {
+    const name = this.levelNameInput?.value.trim() || `Untitled Level ${this.nextLevelNumber}`
+    this.hideLevelNameModal()
+
+    try {
+      // Reset terrain for new level
+      const newSeed = Math.random()
+      this.terrain.noise.seed = newSeed
+      this.terrain.customBlocks = []
+      this.terrain.initBlocks()
+      this.terrain.generate()
+
+      // Create level in Firestore
+      const level = await createLevel({
+        name,
+        blocks: [],
+        seed: newSeed,
+      })
+
+      this.currentLevelId = level.id
+      this.levels.unshift({
+        id: level.id,
+        name,
+        thumbnail: null,
+        updatedAt: new Date()
+      })
+      this.updateNextLevelNumber()
+      this.renderLevelsRow()
+
+      this.onPlay()
+      !isMobile && this.control.control.lock()
+    } catch (error) {
+      console.error('Failed to create level:', error)
+      this.showError(error instanceof Error ? error.message : 'Failed to create level')
+    }
+  }
+
+  async handleLoadLevel(levelId: string) {
+    try {
+      const level = await getLevel(levelId)
+      if (!level) {
+        this.showError('Level not found')
+        return
+      }
+
+      // Apply level data to terrain
+      this.terrain.noise.seed = level.seed
+      this.terrain.initBlocks()
+
+      // Convert blocks to internal format
+      const blocks = level.blocks.map(b => {
+        const blockType = hexToBlockType(b.color)
+        return new Block(
+          b.x,
+          b.y,
+          b.z,
+          blockType,
+          true,
+          b.color,
+          false
+        )
+      })
+
+      this.terrain.customBlocks = blocks
+      this.terrain.renderCustomBlocks()
+
+      // Restore camera
+      if (level.camera) {
+        this.terrain.camera.position.set(
+          level.camera.position.x,
+          level.camera.position.y,
+          level.camera.position.z
+        )
+        this.terrain.camera.quaternion.set(
+          level.camera.quaternion.x,
+          level.camera.quaternion.y,
+          level.camera.quaternion.z,
+          level.camera.quaternion.w
+        )
+      }
+
+      this.currentLevelId = levelId
+      this.onPlay()
+      !isMobile && this.control.control.lock()
+    } catch (error) {
+      console.error('Failed to load level:', error)
+      this.showError('Failed to load level')
+    }
+  }
+
+  showError(message: string) {
+    if (!this.errorToast) return
+
+    this.errorToast.textContent = message
+    this.errorToast.classList.remove('hidden')
+
+    setTimeout(() => {
+      this.errorToast?.classList.add('hidden')
+    }, 4000)
+  }
+
   terrain: Terrain
+  control: Control
   fps: FPS
   bag: Bag
   // Joystick removed - mobile controls not needed for MVP
@@ -290,6 +535,22 @@ export default class UI {
   // Auto-save timer
   autoSaveTimer: ReturnType<typeof setInterval> | null = null
 
+  // Level selection state
+  currentLevelId: string | null = null
+  levels: LevelSummary[] = []
+  nextLevelNumber = 1
+  isLoadingLevels = false
+
+  // Level selection UI elements
+  newLevelCard = document.getElementById('new-level')
+  levelsRow = document.getElementById('levels-row')
+  levelsLoading = document.getElementById('levels-loading')
+  levelNameModal = document.getElementById('level-name-modal')
+  levelNameInput = document.getElementById('level-name-input') as HTMLInputElement | null
+  levelNameCancel = document.getElementById('level-name-cancel')
+  levelNameConfirm = document.getElementById('level-name-confirm')
+  errorToast = document.getElementById('error-toast')
+
   // settings
   distance = document.querySelector('#distance')
   distanceInput = document.querySelector('#distance-input')
@@ -307,12 +568,15 @@ export default class UI {
     // isMobile && this.joystick.init()
     this.menu?.classList.add('hidden')
     this.menu?.classList.remove('start')
-    this.play && (this.play.innerHTML = 'Resume')
     this.crossHair.classList.remove('hidden')
-    // Controls button now visible in escape menu (not hidden during gameplay)
     // Show escape-menu-only buttons (Settings, Export) when entering game
     this.setting?.classList.remove('hidden')
     this.export?.classList.remove('hidden')
+    this.exit?.classList.remove('hidden')
+    // Hide level selection
+    this.newLevelCard?.classList.add('hidden')
+    this.levelsRow?.classList.add('hidden')
+    this.levelsLoading?.classList.add('hidden')
     // Start auto-save timer (10 second interval)
     this.startAutoSave()
   }
@@ -320,31 +584,75 @@ export default class UI {
   onPause = () => {
     this.menu?.classList.remove('hidden')
     this.crossHair.classList.add('hidden')
-    // Hide Load Game button in escape menu (only visible in start menu)
-    this.save?.classList.add('hidden')
-    // Controls button visible in escape menu
-    this.controls?.classList.remove('hidden')
-    // Show escape-menu-only buttons (Settings, Export) in escape menu
+    // Show gameplay menu items
     this.setting?.classList.remove('hidden')
     this.export?.classList.remove('hidden')
+    this.exit?.classList.remove('hidden')
+    this.controls?.classList.remove('hidden')
+    // Hide level selection
+    this.newLevelCard?.classList.add('hidden')
+    this.levelsRow?.classList.add('hidden')
+    this.levelsLoading?.classList.add('hidden')
   }
 
-  onExit = () => {
+  onExit = async () => {
     // Stop auto-save timer
     this.stopAutoSave()
-    // Auto-save on exit
-    this.saveToLocalStorage()
+    // Save current level before exiting
+    await this.saveCurrentLevel()
+
+    this.menu?.classList.remove('hidden')
     this.menu?.classList.add('start')
-    this.play && (this.play.innerHTML = 'Play')
-    // Show Load Game button in start menu
-    this.save && (this.save.innerHTML = 'Load Game')
-    this.save?.classList.remove('hidden')
-    this.controls?.classList.remove('hidden')
-    // Hide escape-menu-only buttons (Settings, Export) in start menu
+    this.crossHair.classList.add('hidden')
     this.setting?.classList.add('hidden')
     this.export?.classList.add('hidden')
-    // Update Load Game button state (enable/disable based on saved data)
-    this.updateLoadGameButtonState()
+    this.exit?.classList.add('hidden')
+
+    // Show level selection
+    this.newLevelCard?.classList.remove('hidden')
+    this.levelsRow?.classList.remove('hidden')
+    this.controls?.classList.remove('hidden')
+
+    this.currentLevelId = null
+    await this.refreshLevelsList()
+  }
+
+  // Save current level to Firestore
+  async saveCurrentLevel() {
+    if (!this.currentLevelId) {
+      console.log('No current level to save')
+      return
+    }
+
+    try {
+      await updateLevel(this.currentLevelId, {
+        blocks: this.terrain.customBlocks.map(b => ({
+          x: b.x,
+          y: b.y,
+          z: b.z,
+          color: b.color,
+        })),
+        seed: this.terrain.noise.seed,
+        camera: {
+          position: {
+            x: this.terrain.camera.position.x,
+            y: this.terrain.camera.position.y,
+            z: this.terrain.camera.position.z,
+          },
+          quaternion: {
+            x: this.terrain.camera.quaternion.x,
+            y: this.terrain.camera.quaternion.y,
+            z: this.terrain.camera.quaternion.z,
+            w: this.terrain.camera.quaternion.w,
+          },
+        },
+      })
+
+      console.log('Level saved')
+    } catch (error) {
+      console.error('Failed to save level:', error)
+      // Don't show error toast for auto-save failures (too noisy)
+    }
   }
 
   onLoad = () => {
