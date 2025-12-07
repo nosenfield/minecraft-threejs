@@ -11,7 +11,7 @@ import { isMobile, blockTypeToHex } from '../utils'
 import { captureThumbnail } from '../utils/thumbnail'
 import * as THREE from 'three'
 import { serializeToSpaceJSON } from '../export'
-import { listLevels, createLevel, getLevel, updateLevel, getMaxLevels } from '../firebase/levels'
+import { listLevels, createLevel, getLevel, updateLevel, deleteLevel, getMaxLevels } from '../firebase/levels'
 import type { LevelSummary, CameraState } from '../firebase/types'
 import { BlockType } from '../terrain'
 import {
@@ -361,8 +361,19 @@ export default class UI {
       nameSpan.className = 'level-name'
       nameSpan.textContent = level.name // Safe: textContent escapes HTML
       
+      // Create delete button
+      const deleteButton = document.createElement('button')
+      deleteButton.className = 'level-delete-button'
+      deleteButton.textContent = 'Delete'
+      deleteButton.setAttribute('aria-label', `Delete ${level.name}`)
+      deleteButton.addEventListener('click', (e) => {
+        e.stopPropagation() // Prevent level load when clicking delete
+        this.handleDeleteLevel(level.id, level.name)
+      })
+      
       card.appendChild(thumbnail)
       card.appendChild(nameSpan)
+      card.appendChild(deleteButton)
       card.addEventListener('click', () => this.handleLoadLevel(level.id))
       this.levelsRow.appendChild(card)
     }
@@ -485,6 +496,37 @@ export default class UI {
     } catch (error) {
       console.error('Failed to load level:', error)
       this.showError('Failed to load level')
+    }
+  }
+
+  async handleDeleteLevel(levelId: string, levelName: string) {
+    // Show confirmation dialog
+    const confirmed = window.confirm(`Are you sure you want to delete "${levelName}"?`)
+    if (!confirmed) {
+      return
+    }
+
+    try {
+      // Delete level from Firestore
+      await deleteLevel(levelId)
+
+      // If this was the current level, clear it
+      if (this.currentLevelId === levelId) {
+        this.currentLevelId = null
+      }
+
+      // Remove from local levels array
+      this.levels = this.levels.filter(l => l.id !== levelId)
+
+      // Refresh the display
+      this.renderLevelsRow()
+      this.updateNextLevelNumber()
+    } catch (error) {
+      console.error('Failed to delete level:', error)
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Failed to delete level'
+      this.showError(errorMessage)
     }
   }
 

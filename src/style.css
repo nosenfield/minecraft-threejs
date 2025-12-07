@@ -1,3 +1,55 @@
+:root {
+  /* Gray button/panel colors */
+  --color-gray-bg: #727272;
+  --color-gray-border-light: #a4a4a4;
+  --color-gray-border-dark: #545655;
+  
+  /* Green button/active colors */
+  --color-green-bg: #218306;
+  --color-green-border-light: #17cd07;
+  --color-green-border-dark: #004e00;
+  --color-green-hover: #5a8f3a;
+  --color-green-hover-light: #6aa84a;
+  --color-green-dark: #4a7a2a;
+  --color-green-border-accent: #7ab95a;
+  
+  /* Error/destructive colors */
+  --color-error-bg: #8b0000;
+  --color-error-border-light: #ff4444;
+  --color-error-border-dark: #5a0000;
+  --color-error-delete-light: #cc0000;
+  --color-error-delete-hover: #a00000;
+  --color-error-delete-active: #6b0000;
+  --color-error-toast: #c0392b;
+  
+  /* Dark backgrounds */
+  --color-dark-bg: #3a3a3a;
+  --color-dark-bg-overlay: rgba(0, 0, 0, 0.7);
+  
+  /* Text colors */
+  --color-text-primary: white;
+  --color-text-muted: #888;
+  --color-text-black: #000;
+  
+  /* Input/slider colors */
+  --color-input-bg: #dddddd;
+  
+  /* Border colors for color squares */
+  --color-border-dark: #333;
+  --color-border-darker: #222;
+  --color-border-medium: #666;
+  
+  /* Warning colors */
+  --color-warning-border: #ff6b6b;
+  
+  /* Tools colors */
+  --color-tools-hover: #6a6b6a;
+  
+  /* Shadow colors */
+  --color-shadow-black: black;
+  --color-shadow-white: white;
+}
+
 body {
   font-family: Minecraft, Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -57,24 +109,24 @@ body {
 
   font-family: Minecraft, Avenir, Helvetica, Arial, sans-serif;
   font-size: 1.2rem;
-  color: white;
-  background-color: #727272;
+  color: var(--color-text-primary);
+  background-color: var(--color-gray-bg);
   cursor: pointer;
 
-  border-left: 2px solid #a4a4a4;
-  border-top: 2px solid #a4a4a4;
-  border-bottom: 2px solid #545655;
-  border-right: 2px solid #545655;
-  box-shadow: 0 0 0 2px black;
+  border-left: 2px solid var(--color-gray-border-light);
+  border-top: 2px solid var(--color-gray-border-light);
+  border-bottom: 2px solid var(--color-gray-border-dark);
+  border-right: 2px solid var(--color-gray-border-dark);
+  box-shadow: 0 0 0 2px var(--color-shadow-black);
 }
 
 .button:hover {
-  background-color: #218306;
-  border-left: 2px solid #17cd07;
-  border-top: 2px solid #17cd07;
-  border-bottom: 2px solid #004e00;
-  border-right: 2px solid #004e00;
-  box-shadow: 0 0 0 2px white;
+  background-color: var(--color-green-bg);
+  border-left: 2px solid var(--color-green-border-light);
+  border-top: 2px solid var(--color-green-border-light);
+  border-bottom: 2px solid var(--color-green-border-dark);
+  border-right: 2px solid var(--color-green-border-dark);
+  box-shadow: 0 0 0 2px var(--color-shadow-white);
 }
 
 .button:disabled {
@@ -83,12 +135,12 @@ body {
 }
 
 .button:disabled:hover {
-  background-color: #727272;
-  border-left: 2px solid #a4a4a4;
-  border-top: 2px solid #a4a4a4;
-  border-bottom: 2px solid #545655;
-  border-right: 2px solid #545655;
-  box-shadow: 0 0 0 2px black;
+  background-color: var(--color-gray-bg);
+  border-left: 2px solid var(--color-gray-border-light);
+  border-top: 2px solid var(--color-gray-border-light);
+  border-bottom: 2px solid var(--color-gray-border-dark);
+  border-right: 2px solid var(--color-gray-border-dark);
+  box-shadow: 0 0 0 2px var(--color-shadow-black);
 }
 
 .footer {
@@ -119,8 +171,8 @@ body {
 
 .block-counter.warning {
   background-color: hsla(0, 50%, 50%, 0.8);
-  border-color: #ff6b6b;
-  color: #fff;
+  border-color: var(--color-warning-border);
+  color: var(--color-text-primary);
 }
 
 .fps {
@@ -164,21 +216,21 @@ body {
   height: 100%;
   border-radius: 2px;
   position: relative;
-  border: 2px solid #333;
+  border: 2px solid var(--color-border-dark);
 }
 
 .color-square.color-white {
-  border: 2px solid #333;
+  border: 2px solid var(--color-border-dark);
   box-shadow: inset 0 0 4px rgba(0,0,0,0.2);
 }
 
 .color-square.color-gray {
-  border: 2px solid #222;
+  border: 2px solid var(--color-border-darker);
   box-shadow: inset 0 0 4px rgba(0,0,0,0.3);
 }
 
 .color-square.color-black {
-  border: 2px solid #666;
+  border: 2px solid var(--color-border-medium);
   box-shadow: inset 0 0 4px rgba(255,255,255,0.1);
 }
 
@@ -193,17 +245,17 @@ body {
 }
 
 .color-label.label-light {
-  color: #000;
+  color: var(--color-text-black);
   text-shadow: 1px 1px 1px rgba(255,255,255,0.8);
 }
 
 .color-label.label-dark {
-  color: #fff;
+  color: var(--color-text-primary);
   text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
 }
 
 .color-label.label-colored {
-  color: #fff;
+  color: var(--color-text-primary);
   text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
 }
 
@@ -243,13 +295,13 @@ body {
   transform: translate(-50%, 0%);
 
   width: 300px;
-  color: white;
-  background-color: #727272;
-  border-left: 2px solid #a4a4a4;
-  border-top: 2px solid #a4a4a4;
-  border-bottom: 2px solid #545655;
-  border-right: 2px solid #545655;
-  box-shadow: 0 0 0 2px black;
+  color: var(--color-text-primary);
+  background-color: var(--color-gray-bg);
+  border-left: 2px solid var(--color-gray-border-light);
+  border-top: 2px solid var(--color-gray-border-light);
+  border-bottom: 2px solid var(--color-gray-border-dark);
+  border-right: 2px solid var(--color-gray-border-dark);
+  box-shadow: 0 0 0 2px var(--color-shadow-black);
 
   padding: 0px 30px 0px 30px;
 
@@ -270,13 +322,13 @@ body {
   padding: 12px 0;
   width: 300px;
 
-  color: white;
-  background-color: #218306;
-  border-left: 2px solid #17cd07;
-  border-top: 2px solid #17cd07;
-  border-bottom: 2px solid #004e00;
-  border-right: 2px solid #004e00;
-  box-shadow: 0 0 0 2px white;
+  color: var(--color-text-primary);
+  background-color: var(--color-green-bg);
+  border-left: 2px solid var(--color-green-border-light);
+  border-top: 2px solid var(--color-green-border-light);
+  border-bottom: 2px solid var(--color-green-border-dark);
+  border-right: 2px solid var(--color-green-border-dark);
+  box-shadow: 0 0 0 2px var(--color-shadow-white);
 
   opacity: 0%;
 
@@ -287,12 +339,12 @@ body {
 }
 
 .load-modal {
-  background-color: #727272;
-  border-left: 2px solid #a4a4a4;
-  border-top: 2px solid #a4a4a4;
-  border-bottom: 2px solid #545655;
-  border-right: 2px solid #545655;
-  box-shadow: 0 0 0 2px black;
+  background-color: var(--color-gray-bg);
+  border-left: 2px solid var(--color-gray-border-light);
+  border-top: 2px solid var(--color-gray-border-light);
+  border-bottom: 2px solid var(--color-gray-border-dark);
+  border-right: 2px solid var(--color-gray-border-dark);
+  box-shadow: 0 0 0 2px var(--color-shadow-black);
 }
 
 .show {
@@ -312,13 +364,13 @@ body {
   width: auto;
   min-width: 200px;
   
-  color: white;
-  background-color: #727272;
-  border-left: 2px solid #a4a4a4;
-  border-top: 2px solid #a4a4a4;
-  border-bottom: 2px solid #545655;
-  border-right: 2px solid #545655;
-  box-shadow: 0 0 0 2px black;
+  color: var(--color-text-primary);
+  background-color: var(--color-gray-bg);
+  border-left: 2px solid var(--color-gray-border-light);
+  border-top: 2px solid var(--color-gray-border-light);
+  border-bottom: 2px solid var(--color-gray-border-dark);
+  border-right: 2px solid var(--color-gray-border-dark);
+  box-shadow: 0 0 0 2px var(--color-shadow-black);
   
   text-align: center;
   user-select: none;
@@ -341,13 +393,13 @@ body {
   width: 400px;
   max-width: 90vw;
   
-  color: white;
-  background-color: #8b0000;
-  border-left: 2px solid #ff4444;
-  border-top: 2px solid #ff4444;
-  border-bottom: 2px solid #5a0000;
-  border-right: 2px solid #5a0000;
-  box-shadow: 0 0 0 2px white;
+  color: var(--color-text-primary);
+  background-color: var(--color-error-bg);
+  border-left: 2px solid var(--color-error-border-light);
+  border-top: 2px solid var(--color-error-border-light);
+  border-bottom: 2px solid var(--color-error-border-dark);
+  border-right: 2px solid var(--color-error-border-dark);
+  box-shadow: 0 0 0 2px var(--color-shadow-white);
   
   text-align: center;
   user-select: none;
@@ -368,7 +420,7 @@ body {
 
 .github svg {
   z-index: 3;
-  fill: #727272;
+  fill: var(--color-gray-bg);
   position: fixed;
   left: 100%;
   top: -1%;
@@ -384,13 +436,13 @@ body {
 
   width: 300px;
   height: 370px;
-  color: white;
-  background-color: #727272;
-  border-left: 2px solid #a4a4a4;
-  border-top: 2px solid #a4a4a4;
-  border-bottom: 2px solid #545655;
-  border-right: 2px solid #545655;
-  box-shadow: 0 0 0 2px black;
+  color: var(--color-text-primary);
+  background-color: var(--color-gray-bg);
+  border-left: 2px solid var(--color-gray-border-light);
+  border-top: 2px solid var(--color-gray-border-light);
+  border-bottom: 2px solid var(--color-gray-border-dark);
+  border-right: 2px solid var(--color-gray-border-dark);
+  box-shadow: 0 0 0 2px var(--color-shadow-black);
 
   padding: 0px 30px 0px 30px;
 
@@ -405,26 +457,26 @@ body {
   appearance: none;
   width: 100%;
   height: 16px;
-  background-color: #dddddd;
-  box-shadow: 0 0 0 2px black;
+  background-color: var(--color-input-bg);
+  box-shadow: 0 0 0 2px var(--color-shadow-black);
 }
 #music-input {
   appearance: none;
   width: 14%;
   height: 16px;
-  background-color: #dddddd;
-  box-shadow: 0 0 0 2px black;
+  background-color: var(--color-input-bg);
+  box-shadow: 0 0 0 2px var(--color-shadow-black);
 }
 
 #distance-input::-webkit-slider-thumb:hover,
 #fov-input::-webkit-slider-thumb:hover,
 #music-input::-webkit-slider-thumb:hover {
-  background-color: #218306;
-  border-left: 2px solid #17cd07;
-  border-top: 2px solid #17cd07;
-  border-bottom: 2px solid #004e00;
-  border-right: 2px solid #004e00;
-  box-shadow: 0 0 0 2px white;
+  background-color: var(--color-green-bg);
+  border-left: 2px solid var(--color-green-border-light);
+  border-top: 2px solid var(--color-green-border-light);
+  border-bottom: 2px solid var(--color-green-border-dark);
+  border-right: 2px solid var(--color-green-border-dark);
+  box-shadow: 0 0 0 2px var(--color-shadow-white);
 }
 
 #distance-input::-webkit-slider-thumb,
@@ -434,12 +486,12 @@ body {
   width: 20px;
   height: 30px;
 
-  background-color: #727272;
-  border-left: 2px solid #a4a4a4;
-  border-top: 2px solid #a4a4a4;
-  border-bottom: 2px solid #545655;
-  border-right: 2px solid #545655;
-  box-shadow: 0 0 0 2px black;
+  background-color: var(--color-gray-bg);
+  border-left: 2px solid var(--color-gray-border-light);
+  border-top: 2px solid var(--color-gray-border-light);
+  border-bottom: 2px solid var(--color-gray-border-dark);
+  border-right: 2px solid var(--color-gray-border-dark);
+  box-shadow: 0 0 0 2px var(--color-shadow-black);
 
   cursor: pointer;
 }
@@ -451,12 +503,12 @@ body {
   width: 20px;
   height: 30px;
 
-  background-color: #727272;
-  border-left: 2px solid #a4a4a4;
-  border-top: 2px solid #a4a4a4;
-  border-bottom: 2px solid #545655;
-  border-right: 2px solid #545655;
-  box-shadow: 0 0 0 2px black;
+  background-color: var(--color-gray-bg);
+  border-left: 2px solid var(--color-gray-border-light);
+  border-top: 2px solid var(--color-gray-border-light);
+  border-bottom: 2px solid var(--color-gray-border-dark);
+  border-right: 2px solid var(--color-gray-border-dark);
+  box-shadow: 0 0 0 2px var(--color-shadow-black);
 
   cursor: pointer;
 }
@@ -471,7 +523,7 @@ body {
 
 /* Phase 4: Level Selection UI */
 .title {
-  color: white;
+  color: var(--color-text-primary);
   font-size: 2rem;
   margin-bottom: 20px;
   font-family: Minecraft, Avenir, Helvetica, Arial, sans-serif;
@@ -484,18 +536,18 @@ body {
   padding: 8px;
   margin: 8px;
   cursor: pointer;
-  background-color: #727272;
-  border-left: 2px solid #a4a4a4;
-  border-top: 2px solid #a4a4a4;
-  border-bottom: 2px solid #545655;
-  border-right: 2px solid #545655;
-  box-shadow: 0 0 0 2px black;
+  background-color: var(--color-gray-bg);
+  border-left: 2px solid var(--color-gray-border-light);
+  border-top: 2px solid var(--color-gray-border-light);
+  border-bottom: 2px solid var(--color-gray-border-dark);
+  border-right: 2px solid var(--color-gray-border-dark);
+  box-shadow: 0 0 0 2px var(--color-shadow-black);
   transition: transform 0.1s;
 }
 
 .level-card:hover {
   transform: scale(1.05);
-  background-color: #5a8f3a;
+  background-color: var(--color-green-hover);
 }
 
 .level-card:active {
@@ -503,17 +555,17 @@ body {
 }
 
 .new-level-card {
-  background-color: #4a7a2a;
+  background-color: var(--color-green-dark);
 }
 
 .level-thumbnail {
   width: 120px;
   height: 90px;
-  background-color: #3a3a3a;
+  background-color: var(--color-dark-bg);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--color-text-primary);
   font-size: 14px;
   overflow: hidden;
 }
@@ -526,17 +578,44 @@ body {
 
 .default-thumbnail {
   font-size: 48px;
-  color: #888;
+  color: var(--color-text-muted);
 }
 
 .level-name {
   margin-top: 8px;
-  color: white;
+  color: var(--color-text-primary);
   font-size: 14px;
   max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.level-delete-button {
+  margin-top: 8px;
+  padding: 4px 8px;
+  font-size: 12px;
+  background-color: var(--color-error-bg);
+  color: var(--color-text-primary);
+  border-left: 2px solid var(--color-error-delete-light);
+  border-top: 2px solid var(--color-error-delete-light);
+  border-bottom: 2px solid var(--color-error-border-dark);
+  border-right: 2px solid var(--color-error-border-dark);
+  box-shadow: 0 0 0 1px var(--color-shadow-black);
+  cursor: pointer;
+  font-family: Minecraft, Avenir, Helvetica, Arial, sans-serif;
+  transition: transform 0.1s;
+  width: 100px;
+}
+
+.level-delete-button:hover {
+  background-color: var(--color-error-delete-hover);
+  transform: scale(1.05);
+}
+
+.level-delete-button:active {
+  transform: scale(0.98);
+  background-color: var(--color-error-delete-active);
 }
 
 .levels-row {
@@ -548,7 +627,7 @@ body {
 }
 
 .levels-loading {
-  color: #888;
+  color: var(--color-text-muted);
   font-size: 14px;
   margin: 16px 0;
 }
@@ -560,7 +639,7 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: var(--color-dark-bg-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -572,18 +651,18 @@ body {
 }
 
 .modal-content {
-  background-color: #727272;
+  background-color: var(--color-gray-bg);
   padding: 24px;
-  border-left: 2px solid #a4a4a4;
-  border-top: 2px solid #a4a4a4;
-  border-bottom: 2px solid #545655;
-  border-right: 2px solid #545655;
-  box-shadow: 0 0 0 2px black;
+  border-left: 2px solid var(--color-gray-border-light);
+  border-top: 2px solid var(--color-gray-border-light);
+  border-bottom: 2px solid var(--color-gray-border-dark);
+  border-right: 2px solid var(--color-gray-border-dark);
+  box-shadow: 0 0 0 2px var(--color-shadow-black);
   text-align: center;
 }
 
 .modal-content h2 {
-  color: white;
+  color: var(--color-text-primary);
   margin-bottom: 16px;
   font-size: 18px;
   font-family: Minecraft, Avenir, Helvetica, Arial, sans-serif;
@@ -594,15 +673,15 @@ body {
   padding: 8px 12px;
   font-size: 16px;
   margin-bottom: 16px;
-  background-color: #3a3a3a;
-  border: 2px solid #545655;
-  color: white;
+  background-color: var(--color-dark-bg);
+  border: 2px solid var(--color-gray-border-dark);
+  color: var(--color-text-primary);
   outline: none;
   font-family: Minecraft, Avenir, Helvetica, Arial, sans-serif;
 }
 
 .level-name-input:focus {
-  border-color: #5a8f3a;
+  border-color: var(--color-green-hover);
 }
 
 .modal-buttons {
@@ -612,11 +691,11 @@ body {
 }
 
 .button.primary {
-  background-color: #5a8f3a;
+  background-color: var(--color-green-hover);
 }
 
 .button.primary:hover {
-  background-color: #6aa84a;
+  background-color: var(--color-green-hover-light);
 }
 
 /* Error Toast */
@@ -625,14 +704,14 @@ body {
   bottom: 100px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: #c0392b;
-  color: white;
+  background-color: var(--color-error-toast);
+  color: var(--color-text-primary);
   padding: 12px 24px;
   border-radius: 4px;
   z-index: 200;
   font-size: 14px;
   font-family: Minecraft, Avenir, Helvetica, Arial, sans-serif;
-  box-shadow: 0 0 0 2px black;
+  box-shadow: 0 0 0 2px var(--color-shadow-black);
 }
 
 .error-toast.hidden {
@@ -660,22 +739,22 @@ body {
   flex-direction: column;
   align-items: center;
   padding: 8px 12px;
-  color: white;
+  color: var(--color-text-primary);
   cursor: pointer;
-  background-color: #545655;
-  border: 2px solid #3a3a3a;
+  background-color: var(--color-gray-border-dark);
+  border: 2px solid var(--color-dark-bg);
   user-select: none;
   min-width: 50px;
   font-family: Minecraft, Avenir, Helvetica, Arial, sans-serif;
 }
 
 .tools-item:hover {
-  background-color: #6a6b6a;
+  background-color: var(--color-tools-hover);
 }
 
 .tools-item.selected {
-  background-color: #5a8f3a;
-  border-color: #7ab95a;
+  background-color: var(--color-green-hover);
+  border-color: var(--color-green-border-accent);
 }
 
 .tool-label {
