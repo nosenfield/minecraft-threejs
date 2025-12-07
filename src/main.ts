@@ -31,7 +31,7 @@ async function init() {
   const terrain = new Terrain(scene, camera)
   const control = new Control(scene, camera, player, terrain, audio)
 
-  const ui = new UI(terrain, control)
+  const ui = new UI(terrain, control, renderer)
 
   // Initialize level selection after auth is ready
   await ui.initLevelSelection()

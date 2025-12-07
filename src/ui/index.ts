@@ -7,6 +7,7 @@ import { Mode } from '../player'
 // Joystick import removed - mobile controls not needed for MVP
 // import Joystick from './joystick'
 import { isMobile, blockTypeToHex } from '../utils'
+import { captureThumbnail } from '../utils/thumbnail'
 import * as THREE from 'three'
 import { serializeToSpaceJSON } from '../export'
 import { listLevels, createLevel, getLevel, updateLevel, getMaxLevels } from '../firebase/levels'
@@ -43,9 +44,10 @@ function hexToBlockType(hex: string): BlockType {
 }
 
 export default class UI {
-  constructor(terrain: Terrain, control: Control) {
+  constructor(terrain: Terrain, control: Control, renderer: THREE.WebGLRenderer) {
     this.terrain = terrain
     this.control = control
+    this.renderer = renderer
     this.fps = new FPS()
     this.bag = new Bag()
     // Joystick removed - mobile controls not needed for MVP
@@ -165,9 +167,6 @@ export default class UI {
       }
     })
 
-    // Initialize Load Game button state on startup
-    this.updateLoadGameButtonState()
-
     // Export button handler
     this.export?.addEventListener('click', async () => {
       await this.handleExport()
@@ -280,7 +279,10 @@ export default class UI {
 
     // Auto-save on page unload
     window.addEventListener('beforeunload', () => {
-      this.saveToLocalStorage()
+      if (this.currentLevelId) {
+        // Attempt sync save (may not complete)
+        this.saveCurrentLevel()
+      }
     })
   }
 
@@ -497,6 +499,7 @@ export default class UI {
 
   terrain: Terrain
   control: Control
+  renderer: THREE.WebGLRenderer
   fps: FPS
   bag: Bag
   // Joystick removed - mobile controls not needed for MVP
@@ -625,6 +628,8 @@ export default class UI {
     }
 
     try {
+      const thumbnail = captureThumbnail(this.renderer)
+
       await updateLevel(this.currentLevelId, {
         blocks: this.terrain.customBlocks.map(b => ({
           x: b.x,
@@ -646,7 +651,15 @@ export default class UI {
             w: this.terrain.camera.quaternion.w,
           },
         },
+        thumbnail,
       })
+
+      // Update local thumbnail cache
+      const levelIndex = this.levels.findIndex(l => l.id === this.currentLevelId)
+      if (levelIndex >= 0) {
+        this.levels[levelIndex].thumbnail = thumbnail
+        this.levels[levelIndex].updatedAt = new Date()
+      }
 
       console.log('Level saved')
     } catch (error) {
@@ -685,77 +698,14 @@ export default class UI {
     }
   }
 
-  // Check if saved game data exists in localStorage
-  hasSavedGame = (): boolean => {
-    const savedBlocks = window.localStorage.getItem('block')
-    return savedBlocks !== null && savedBlocks !== 'null' && savedBlocks !== ''
-  }
-
-  // Update Load Game button state (enable/disable based on saved data)
-  updateLoadGameButtonState = () => {
-    if (!this.save) return
-    
-    // Only update state when button shows "Load Game" (start menu)
-    if (this.save.innerHTML === 'Load Game') {
-      const hasSaved = this.hasSavedGame()
-      this.save.disabled = !hasSaved
-    }
-  }
-
-  // Auto-save functionality
-  saveToLocalStorage = () => {
-    try {
-      window.localStorage.setItem(
-        'block',
-        JSON.stringify(this.terrain.customBlocks)
-      )
-      window.localStorage.setItem('seed', JSON.stringify(this.terrain.noise.seed))
-
-      // Save camera position and rotation (quaternion) for complete view restoration
-      window.localStorage.setItem(
-        'camera',
-        JSON.stringify({
-          position: {
-            x: this.terrain.camera.position.x,
-            y: this.terrain.camera.position.y,
-            z: this.terrain.camera.position.z
-          },
-          quaternion: {
-            x: this.terrain.camera.quaternion.x,
-            y: this.terrain.camera.quaternion.y,
-            z: this.terrain.camera.quaternion.z,
-            w: this.terrain.camera.quaternion.w
-          }
-        })
-      )
-      // Keep 'position' for backward compatibility (legacy saves)
-      window.localStorage.setItem(
-        'position',
-        JSON.stringify({
-          x: this.terrain.camera.position.x,
-          y: this.terrain.camera.position.y,
-          z: this.terrain.camera.position.z
-        })
-      )
-      // Update Load Game button state after saving
-      this.updateLoadGameButtonState()
-    } catch (e) {
-      console.error('Auto-save failed:', e)
-      // Handle quota exceeded or other errors gracefully
-      if (e instanceof DOMException && e.name === 'QuotaExceededError') {
-        console.warn('localStorage quota exceeded - auto-save disabled')
-        this.stopAutoSave()
-      }
-    }
-  }
 
   // Start auto-save timer (10 second interval)
   startAutoSave = () => {
     // Clear any existing timer
     this.stopAutoSave()
     // Start new timer
-    this.autoSaveTimer = setInterval(() => {
-      this.saveToLocalStorage()
+    this.autoSaveTimer = window.setInterval(() => {
+      this.saveCurrentLevel()
     }, 10000) // 10 seconds
   }
 

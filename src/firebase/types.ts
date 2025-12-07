@@ -29,7 +29,7 @@ export interface LevelDocument {
   blocks: Block[]
   seed: number
   camera: CameraState | null
-  thumbnail: string | null // Base64 PNG
+  thumbnail: string | null // Base64 JPEG
   createdAt: Timestamp
   updatedAt: Timestamp
 }

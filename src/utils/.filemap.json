@@ -2,12 +2,14 @@
   "m": "utils",
   "p": "Shared utility functions",
   "f": {
-    "index.ts": "htmlToDom(), isMobile constant, blockTypeToHex()"
+    "index.ts": "htmlToDom(), isMobile constant, blockTypeToHex()",
+    "thumbnail.ts": "captureThumbnail() - WebGL canvas to base64 JPEG thumbnail"
   },
   "x": [
     "htmlToDom(html): Converts HTML string to DOM, appends to body",
     "isMobile: Boolean for mobile device detection",
-    "blockTypeToHex(type): BlockType enum to hex color string"
+    "blockTypeToHex(type): BlockType enum to hex color string",
+    "captureThumbnail(renderer): WebGL canvas to base64 JPEG (240x180, quality 0.7)"
   ],
   "r": [
     "../terrain/index.ts: BlockType enum",
