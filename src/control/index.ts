@@ -121,6 +121,10 @@ export default class Control {
   dragStart: THREE.Vector3 | null = null
   isDragging = false
 
+  // Wall tool two-phase state
+  wallPhase: 'idle' | 'drawing_line' | 'drawing_height' = 'idle'
+  wallBaseLine: THREE.Vector3[] = []
+
   initRayCaster = () => {
     this.raycasterUp.ray.direction = new THREE.Vector3(0, 1, 0)
     this.raycasterDown.ray.direction = new THREE.Vector3(0, -1, 0)
@@ -267,21 +271,47 @@ export default class Control {
             block.object.getMatrixAt(block.instanceId!, matrix)
             const position = new THREE.Vector3().setFromMatrixPosition(matrix)
 
-            // return when block overlaps with player
-            if (
-              position.x + normal.x === Math.round(this.camera.position.x) &&
-              position.z + normal.z === Math.round(this.camera.position.z) &&
-              (position.y + normal.y === Math.round(this.camera.position.y) ||
-                position.y + normal.y ===
-                  Math.round(this.camera.position.y - 1))
-            ) {
-              return
-            }
-
-            // Calculate placement position and check coordinate bounds
+            // Calculate placement position
             const placeX = normal.x + position.x
             const placeY = normal.y + position.y
             const placeZ = normal.z + position.z
+            const placementPosition = new THREE.Vector3(placeX, placeY, placeZ)
+
+            // Line and Floor modes: start drag operation
+            if (this.editMode === EditMode.Line || this.editMode === EditMode.Floor) {
+              this.dragStart = placementPosition
+              this.isDragging = true
+              return // Don't place block, wait for mouseup
+            }
+
+            // Wall mode: handle two-phase interaction
+            if (this.editMode === EditMode.Wall) {
+              if (this.wallPhase === 'idle') {
+                // Phase 1 start: begin drawing base line
+                this.wallPhase = 'drawing_line'
+                this.dragStart = placementPosition
+                this.isDragging = true
+                return
+              } else if (this.wallPhase === 'drawing_height') {
+                // Phase 2 confirm: place wall blocks
+                const positions = this.terrain.highlight.getPreviewPositions()
+                this.placeMultipleBlocks(positions)
+                this.resetWallState()
+                return
+              }
+              return
+            }
+
+            // Single mode: existing placement logic continues below...
+            // return when block overlaps with player
+            if (
+              placeX === Math.round(this.camera.position.x) &&
+              placeZ === Math.round(this.camera.position.z) &&
+              (placeY === Math.round(this.camera.position.y) ||
+                placeY === Math.round(this.camera.position.y - 1))
+            ) {
+              return
+            }
 
             // Check coordinate bounds
             if (
@@ -443,7 +473,8 @@ export default class Control {
         break
     }
 
-    if (!isMobile && !this.mouseHolding) {
+    // Only enable hold-to-place for Single mode
+    if (!isMobile && !this.mouseHolding && this.editMode === EditMode.Single) {
       this.mouseHolding = true
       this.clickInterval = setInterval(() => {
         this.mousedownHandler(e)
@@ -455,6 +486,33 @@ export default class Control {
   mouseupHandler = () => {
     this.clickInterval && clearInterval(this.clickInterval)
     this.mouseHolding = false
+
+    // Wall mode: transition from Phase 1 to Phase 2
+    if (this.editMode === EditMode.Wall && this.wallPhase === 'drawing_line') {
+      const positions = this.terrain.highlight.getPreviewPositions()
+
+      if (positions.length > 0) {
+        // Store base line and transition to Phase 2
+        this.wallBaseLine = positions.map(p => p.clone())
+        this.wallPhase = 'drawing_height'
+        this.isDragging = false
+        // Keep dragStart for reference
+      } else {
+        // No line drawn, reset
+        this.resetWallState()
+      }
+      return
+    }
+
+    // Line and Floor modes: place blocks on release
+    if (this.isDragging && (this.editMode === EditMode.Line || this.editMode === EditMode.Floor)) {
+      const positions = this.terrain.highlight.getPreviewPositions()
+      this.placeMultipleBlocks(positions)
+    }
+
+    // Reset drag state
+    this.dragStart = null
+    this.isDragging = false
   }
 
   changeHoldingBlockHandler = (e: KeyboardEvent) => {
@@ -488,10 +546,20 @@ export default class Control {
     }
   }
 
+  // Escape key handler for canceling wall drawing
+  private escapeHandler = (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && this.editMode === EditMode.Wall && this.wallPhase !== 'idle') {
+      this.resetWallState()
+      this.dragStart = null
+      this.isDragging = false
+    }
+  }
+
   initEventListeners = () => {
     // add / remove handler when pointer lock / unlock
     document.addEventListener('pointerlockchange', () => {
       if (document.pointerLockElement) {
+        document.body.addEventListener('keydown', this.escapeHandler)
         document.body.addEventListener(
           'keydown',
           this.changeHoldingBlockHandler
@@ -502,6 +570,7 @@ export default class Control {
         document.body.addEventListener('mousedown', this.mousedownHandler)
         document.body.addEventListener('mouseup', this.mouseupHandler)
       } else {
+        document.body.removeEventListener('keydown', this.escapeHandler)
         document.body.removeEventListener(
           'keydown',
           this.changeHoldingBlockHandler
@@ -512,6 +581,11 @@ export default class Control {
         document.body.removeEventListener('mousedown', this.mousedownHandler)
         document.body.removeEventListener('mouseup', this.mouseupHandler)
         this.velocity = new THREE.Vector3(0, 0, 0)
+
+        // Reset wall state on pointer unlock
+        if (this.wallPhase !== 'idle') {
+          this.resetWallState()
+        }
       }
     })
   }
@@ -747,5 +821,92 @@ export default class Control {
     // Reset drag state when changing modes
     this.dragStart = null
     this.isDragging = false
+    // Reset wall state
+    this.resetWallState()
+  }
+
+  /**
+   * Reset wall tool state to idle
+   */
+  private resetWallState() {
+    this.wallPhase = 'idle'
+    this.wallBaseLine = []
+  }
+
+  /**
+   * Place multiple blocks at the given positions.
+   * Validates bounds, player overlap, existing blocks, and block limit.
+   *
+   * @param positions - Array of positions to place blocks
+   * @returns Number of blocks actually placed
+   */
+  private placeMultipleBlocks(positions: THREE.Vector3[]): number {
+    // Check if placing would exceed block limit
+    const availableSlots = MAX_USER_BLOCKS - this.terrain.getUserPlacedBlockCount()
+    if (availableSlots <= 0) {
+      return 0
+    }
+
+    const matrix = new THREE.Matrix4()
+    let placedCount = 0
+    const playerX = Math.round(this.camera.position.x)
+    const playerZ = Math.round(this.camera.position.z)
+    const playerY = Math.round(this.camera.position.y)
+    const playerYBelow = Math.round(this.camera.position.y - 1)
+
+    for (const pos of positions) {
+      // Stop if we've hit the limit
+      if (placedCount >= availableSlots) {
+        break
+      }
+
+      // Bounds check
+      if (pos.x < BLOCK_X_MIN || pos.x > BLOCK_X_MAX ||
+          pos.z < BLOCK_Z_MIN || pos.z > BLOCK_Z_MAX ||
+          pos.y < BLOCK_Y_MIN || pos.y > BLOCK_Y_MAX) {
+        continue
+      }
+
+      // Player overlap check
+      if (pos.x === playerX && pos.z === playerZ &&
+          (pos.y === playerY || pos.y === playerYBelow)) {
+        continue
+      }
+
+      // Check if block already exists at this position
+      const blockKey = `${pos.x}_${pos.y}_${pos.z}`
+      const existingBlock = this.terrain.blocksMap.get(blockKey)
+      if (existingBlock && existingBlock.placed) {
+        continue
+      }
+
+      // Place the block
+      matrix.setPosition(pos.x, pos.y, pos.z)
+      this.terrain.blocks[this.holdingBlock].setMatrixAt(
+        this.terrain.getCount(this.holdingBlock),
+        matrix
+      )
+      this.terrain.setCount(this.holdingBlock)
+
+      // Track in customBlocks and blocksMap
+      const newBlock = new Block(
+        pos.x, pos.y, pos.z,
+        this.holdingBlock,
+        true,
+        blockTypeToHex(this.holdingBlock)
+      )
+      this.terrain.customBlocks.push(newBlock)
+      this.terrain.blocksMap.set(blockKey, newBlock)
+      this.terrain.incrementUserPlacedCount()
+      placedCount++
+    }
+
+    if (placedCount > 0) {
+      this.terrain.blocks[this.holdingBlock].instanceMatrix.needsUpdate = true
+      // Play sound once for the entire placement
+      this.audio.playSound(this.holdingBlock)
+    }
+
+    return placedCount
   }
 }

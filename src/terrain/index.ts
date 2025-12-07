@@ -4,6 +4,7 @@ import Block from './mesh/block'
 import Highlight from './highlight'
 import Noise from './noise'
 import { blockTypeToHex } from '../utils'
+import { EditMode } from '../control/editMode'
 
 import Generate from './worker/generate?worker'
 
@@ -384,22 +385,36 @@ export default class Terrain {
     }
   }
 
-  update = () => {
+  update = (control?: {
+    editMode: EditMode,
+    isDragging: boolean,
+    dragStart: THREE.Vector3 | null,
+    holdingBlock: BlockType,
+    wallPhase?: 'idle' | 'drawing_line' | 'drawing_height',
+    wallBaseLine?: THREE.Vector3[]
+  }) => {
     // Chunk tracking kept for potential future use
     this.chunk.set(
       Math.floor(this.camera.position.x / this.chunkSize),
       Math.floor(this.camera.position.z / this.chunkSize)
     )
 
-    // Terrain generation on chunk change disabled
-    // if (
-    //   this.chunk.x !== this.previousChunk.x ||
-    //   this.chunk.y !== this.previousChunk.y
-    // ) {
-    //   this.generate()
-    // }
-
     this.previousChunk.copy(this.chunk)
+
+    // Pass control state to highlight for multi-block preview
+    if (control) {
+      this.highlight.setEditMode(control.editMode)
+      this.highlight.setDragStart(control.isDragging ? control.dragStart : null)
+      this.highlight.setPreviewColor(blockTypeToHex(control.holdingBlock))
+      this.highlight.setCurrentBlockCount(this.getUserPlacedBlockCount())
+
+      if (control.wallPhase !== undefined) {
+        this.highlight.setWallPhase(control.wallPhase)
+      }
+      if (control.wallBaseLine) {
+        this.highlight.setWallBaseLine(control.wallBaseLine)
+      }
+    }
 
     this.highlight.update()
   }

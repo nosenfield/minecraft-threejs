@@ -20,7 +20,6 @@ async function init() {
     // Continue anyway - offline mode will work
   }
 
-  // ... existing initialization code ...
   const core = new Core()
   const camera = core.camera
   const scene = core.scene
@@ -48,7 +47,14 @@ async function init() {
     requestAnimationFrame(animate)
 
     control.update()
-    terrain.update()
+    terrain.update({
+      editMode: control.editMode,
+      isDragging: control.isDragging,
+      dragStart: control.dragStart,
+      holdingBlock: control.holdingBlock,
+      wallPhase: control.wallPhase,
+      wallBaseLine: control.wallBaseLine
+    })
     ui.update()
 
     renderer.render(scene, camera)
